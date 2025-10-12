@@ -41,7 +41,19 @@ func (v *PostViews) CreatePost(c *gin.Context) {
 		return
 	}
 
-	result, err := v.service.Create(input.ToModel())
+	// Get authenticated user ID
+	userID, exists := GetUserIDFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
+			Error: "User not authenticated",
+		})
+		return
+	}
+
+	postModel := input.ToModel()
+	postModel.UserID = userID
+
+	result, err := v.service.Create(postModel)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, schemas.ErrorResponse{
 			Error: fmt.Sprintf("Failed to create post: %v", err),
@@ -66,13 +78,21 @@ func (v *PostViews) ListPosts(c *gin.Context) {
 	var query schemas.ListPostsQueryParams
 	query.Page, _ = strconv.Atoi(c.Query("page"))
 	query.Limit, _ = strconv.Atoi(c.Query("limit"))
-	
+
 	// Set defaults if not provided
 	if query.Page == 0 {
 		query.Page = 1
 	}
 	if query.Limit == 0 {
 		query.Limit = 10
+	}
+
+	// Check if authenticated user wants to filter by their own posts
+	userID, exists := GetUserIDFromContext(c)
+	if exists {
+		if c.Query("mine") == "true" {
+			query.UserID = &userID
+		}
 	}
 
 	results, total, err := v.service.GetWithPagination(query)
@@ -83,7 +103,7 @@ func (v *PostViews) ListPosts(c *gin.Context) {
 		return
 	}
 
-	response := schemas.ListPostsResponse{
+response := schemas.ListPostsResponse{
 		Data:  results,
 		Limit: query.Limit,
 		Page:  query.Page,
@@ -135,6 +155,30 @@ func (v *PostViews) UpdatePost(c *gin.Context) {
 		return
 	}
 
+	// Check if post exists and belongs to authenticated user
+	authenticatedUserID, exists := GetUserIDFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
+			Error: "User not authenticated",
+		})
+		return
+	}
+
+	post, err := v.service.GetByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, schemas.ErrorResponse{
+			Error: "Post not found",
+		})
+		return
+	}
+
+	if post.UserID != authenticatedUserID {
+		c.JSON(http.StatusForbidden, schemas.ErrorResponse{
+			Error: "You can only update your own posts",
+		})
+		return
+	}
+
 	var input schemas.UpdatePostRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
@@ -176,6 +220,30 @@ func (v *PostViews) PartialUpdatePost(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
 			Error: "Invalid ID format",
+		})
+		return
+	}
+
+	// Check if post exists and belongs to authenticated user
+	authenticatedUserID, exists := GetUserIDFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
+			Error: "User not authenticated",
+		})
+		return
+	}
+
+	post, err := v.service.GetByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, schemas.ErrorResponse{
+			Error: "Post not found",
+		})
+		return
+	}
+
+	if post.UserID != authenticatedUserID {
+		c.JSON(http.StatusForbidden, schemas.ErrorResponse{
+			Error: "You can only update your own posts",
 		})
 		return
 	}
@@ -238,6 +306,30 @@ func (v *PostViews) DeletePost(c *gin.Context) {
 		return
 	}
 
+	// Check if post exists and belongs to authenticated user
+	authenticatedUserID, exists := GetUserIDFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
+			Error: "User not authenticated",
+		})
+		return
+	}
+
+	post, err := v.service.GetByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, schemas.ErrorResponse{
+			Error: "Post not found",
+		})
+		return
+	}
+
+	if post.UserID != authenticatedUserID {
+		c.JSON(http.StatusForbidden, schemas.ErrorResponse{
+			Error: "You can only delete your own posts",
+		})
+		return
+	}
+
 	err = v.service.Delete(uint(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, schemas.ErrorResponse{
@@ -255,11 +347,11 @@ func (v *PostViews) DeletePost(c *gin.Context) {
 func (v *PostViews) RegisterRoutes(router *gin.Engine) {
 	posts := router.Group("/posts")
 	{
-		posts.POST("", v.CreatePost)
+		posts.POST("", AuthMiddleware(), v.CreatePost)
 		posts.GET("", v.ListPosts)
 		posts.GET("/:id", v.GetPost)
-		posts.PUT("/:id", v.UpdatePost)
-		posts.PATCH("/:id", v.PartialUpdatePost)
-		posts.DELETE("/:id", v.DeletePost)
+		posts.PUT("/:id", AuthMiddleware(), v.UpdatePost)
+		posts.PATCH("/:id", AuthMiddleware(), v.PartialUpdatePost)
+		posts.DELETE("/:id", AuthMiddleware(), v.DeletePost)
 	}
 }

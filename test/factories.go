@@ -22,17 +22,38 @@ func WithContent(content string) PostOption {
 	}
 }
 
+func WithUserID(userID uint) PostOption {
+	return func(p *models.Post) {
+		p.UserID = userID
+	}
+}
+
 func PostFactory(opts ...PostOption) models.Post {
+	// Create a default user only if no UserID is explicitly set
 	post := &models.Post{
 		Title:   gofakeit.Sentence(6),
 		Content: gofakeit.Paragraph(1, 3, 12, " "),
 	}
 
+	// Check if UserID is set via options
+	userIDProvided := false
 	for _, opt := range opts {
 		opt(post)
+		if post.UserID != 0 {
+			userIDProvided = true
+		}
 	}
 
-	initializers.DB.Create(post)
+	// If no UserID was provided, create a default user and assign it
+	if !userIDProvided {
+		user := UserFactory("testpassword123")
+		post.UserID = user.ID
+	}
+
+	result := initializers.DB.Create(post)
+	if result.Error != nil {
+		panic(result.Error) // Fail fast in tests
+	}
 	return *post
 }
 

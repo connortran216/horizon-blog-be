@@ -10,8 +10,9 @@ var validate = validator.New()
 
 // Query Parameters
 type ListPostsQueryParams struct {
-	Page  int `json:"page" form:"page" validate:"omitempty,min=1" default:"1"`
-	Limit int `json:"limit" form:"limit" validate:"omitempty,min=1,max=100" default:"10"`
+	Page   int  `json:"page" form:"page" validate:"omitempty,min=1" default:"1"`
+	Limit  int  `json:"limit" form:"limit" validate:"omitempty,min=1,max=100" default:"10"`
+	UserID *uint `json:"user_id,omitempty" form:"user_id"`
 }
 
 // Input Schemas
@@ -95,4 +96,3 @@ type ErrorResponse struct {
 type MessageResponse struct {
 	Message string `json:"message"`
 }
-

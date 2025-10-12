@@ -67,21 +67,28 @@ func (s *PostService) GetAll() ([]models.Post, error) {
 func (s *PostService) GetWithPagination(query schemas.ListPostsQueryParams) ([]models.Post, int64, error) {
 	var posts []models.Post
 	var total int64
-	
+
+	// Build query with optional UserID filter
+	db := s.db.Model(&models.Post{})
+
+	if query.UserID != nil {
+		db = db.Where("user_id = ?", *query.UserID)
+	}
+
 	// Get total count
-	if err := s.db.Model(&models.Post{}).Count(&total).Error; err != nil {
+	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	
+
 	// Calculate offset
 	offset := (query.Page - 1) * query.Limit
-	
+
 	// Get paginated results
-	result := s.db.Limit(query.Limit).Offset(offset).Find(&posts)
+	result := db.Preload("User").Limit(query.Limit).Offset(offset).Find(&posts)
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}
-	
+
 	return posts, total, nil
 }
 

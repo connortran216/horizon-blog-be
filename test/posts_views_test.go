@@ -17,6 +17,11 @@ func TestCreatePostSuccess(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
 	
+	_ = UserFactory("testPassword123",
+		WithEmail("test-update@example.com"),
+		WithName("Test User"),
+	)
+
 	requestBody := map[string]string{
 		"title":   "Test Post Title",
 		"content": "This is a test post content",
@@ -25,6 +30,7 @@ func TestCreatePostSuccess(t *testing.T) {
 	jsonData, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("POST", "/posts", bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-update@example.com"))
 	
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -42,21 +48,28 @@ func TestCreatePostSuccess(t *testing.T) {
 func TestCreatePostValidationError(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
-	
+
+	// Create user for authentication
+	user := UserFactory("testPassword123",
+		WithEmail("test-validation@example.com"),
+		WithName("Test User"),
+	)
+
 	requestBody := map[string]string{
-		"title":   "",
+		"title":   "", // Invalid - empty title
 		"content": "This is a test post content",
 	}
-	
+
 	jsonData, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("POST", "/posts", bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
-	
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, user.Email))
+
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
-	
+
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	
+
 	var response schemas.ErrorResponse
 	json.Unmarshal(w.Body.Bytes(), &response)
 	assert.Contains(t, response.Error, "Validation failed: Key: 'CreatePostRequest.Title' Error:Field validation for 'Title' failed on the 'required' tag")
@@ -174,17 +187,28 @@ func TestUpdatePostSuccess(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
 
-	// Create mock data Post
-	post := PostFactory()
-	
+	// Create user and login to get auth token
+	user := UserFactory("testPassword123",
+		WithEmail("test-update@example.com"),
+		WithName("Test User"),
+	)
+
+	// Create post for this user
+	post := PostFactory(
+		WithUserID(user.ID),
+		WithTitle("Original Title"),
+		WithContent("Original Content"),
+	)
+
 	requestBody := map[string]string{
 		"title":   "Updated Title",
 		"content": "Updated Content",
 	}
-	
+
 	jsonData, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("PUT", "/posts/"+strconv.FormatUint(uint64(post.ID), 10), bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-update@example.com"))
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -201,15 +225,22 @@ func TestUpdatePostSuccess(t *testing.T) {
 func TestUpdatePostFailWhenDataDoesNotExist(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
-	
+
+	// Create authenticated user but try to update non-existent post
+	UserFactory("testPassword123",
+		WithEmail("test-update-nonexist@example.com"),
+		WithName("Test User"),
+	)
+
 	requestBody := map[string]string{
 		"title":   "Updated Title",
 		"content": "Updated Content",
 	}
-	
+
 	jsonData, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("PUT", "/posts/9999", bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-update-nonexist@example.com"))
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -218,24 +249,29 @@ func TestUpdatePostFailWhenDataDoesNotExist(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &response)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	assert.Contains(t, response.Error, "post not found")
+	assert.Contains(t, response.Error, "Post not found") // Match actual error message case
 }
 
 func TestUpdatePostFailWhenDataIsInvalid(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
 
-	// Create mock data Post
-	post := PostFactory()
-	
+	// Create authenticated user and post
+	user := UserFactory("testPassword123",
+		WithEmail("test-update-invalid@example.com"),
+		WithName("Test User"),
+	)
+	post := PostFactory(WithUserID(user.ID))
+
 	requestBody := map[string]string{
-		"author":   "", // Invalid un-exist field
+		"author":   "", // Invalid non-existent field
 		"content": "Updated Content",
 	}
-	
+
 	jsonData, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("PUT", "/posts/"+strconv.FormatUint(uint64(post.ID), 10), bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-update-invalid@example.com"))
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -251,16 +287,25 @@ func TestPartiallyUpdatePostSuccess(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
 
-	// Create mock data Post
-	post := PostFactory()
-	
+	// Create authenticated user and post for PATCH test
+	user := UserFactory("testPassword123",
+		WithEmail("test-patch@example.com"),
+		WithName("Test User"),
+	)
+	post := PostFactory(
+		WithUserID(user.ID),
+		WithTitle("Original Title"),
+		WithContent("Original Content"),
+	)
+
 	requestBody := map[string]string{
 		"content": "Partially Updated Content",
 	}
-	
+
 	jsonData, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("PATCH", "/posts/"+strconv.FormatUint(uint64(post.ID), 10), bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-patch@example.com"))
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -269,7 +314,7 @@ func TestPartiallyUpdatePostSuccess(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &response)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, post.Title, response.Data.Title) // Title should remain unchanged
+	assert.Equal(t, "Original Title", response.Data.Title) // Title should remain unchanged
 	assert.Equal(t, "Partially Updated Content", response.Data.Content)
 	assert.NotZero(t, response.Data.ID)
 }
@@ -277,14 +322,21 @@ func TestPartiallyUpdatePostSuccess(t *testing.T) {
 func TestPartiallyUpdatePostFailWhenDataDoesNotExist(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
-	
+
+	// Create authenticated user but try to patch non-existent post
+	UserFactory("testPassword123",
+		WithEmail("test-patch-nonexist@example.com"),
+		WithName("Test User"),
+	)
+
 	requestBody := map[string]string{
 		"content": "Partially Updated Content",
 	}
-	
+
 	jsonData, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("PATCH", "/posts/9999", bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-patch-nonexist@example.com"))
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -293,22 +345,28 @@ func TestPartiallyUpdatePostFailWhenDataDoesNotExist(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &response)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	assert.Contains(t, response.Error, "post not found")
+	assert.Contains(t, response.Error, "Post not found") // Match actual error message case
 }
 
 func TestPartiallyUpdatePostFailInvalidData(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
-	// Create mock data Post
-	post := PostFactory()
-	
+
+	// Create authenticated user and post
+	user := UserFactory("testPassword123",
+		WithEmail("test-patch-invalid@example.com"),
+		WithName("Test User"),
+	)
+	post := PostFactory(WithUserID(user.ID))
+
 	requestBody := map[string]string{
 		"title": "", // Invalid empty title
 	}
-	
+
 	jsonData, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("PATCH", "/posts/"+strconv.FormatUint(uint64(post.ID), 10), bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-patch-invalid@example.com"))
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -324,10 +382,20 @@ func TestDeletePostSuccess(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
 
-	// Create mock data Post
-	post := PostFactory()
+	// Create authenticated user and post for DELETE test
+	user := UserFactory("testPassword123",
+		WithEmail("test-delete@example.com"),
+		WithName("Test User"),
+	)
+	post := PostFactory(
+		WithUserID(user.ID),
+		WithTitle("Post to delete"),
+		WithContent("This post will be deleted"),
+	)
+
 	req, _ := http.NewRequest("DELETE", "/posts/"+strconv.FormatUint(uint64(post.ID), 10), nil)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-delete@example.com"))
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -343,8 +411,15 @@ func TestDeletePostFailWhenDataDoesNotExist(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
 
+	// Create authenticated user but try to delete non-existent post
+	UserFactory("testPassword123",
+		WithEmail("test-delete-nonexist@example.com"),
+		WithName("Test User"),
+	)
+
 	req, _ := http.NewRequest("DELETE", "/posts/9999", nil)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-delete-nonexist@example.com"))
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -353,5 +428,117 @@ func TestDeletePostFailWhenDataDoesNotExist(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &response)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	assert.Contains(t, response.Error, "post not found")
+	assert.Contains(t, response.Error, "Post not found") // Match actual error message case
 }
+
+// Additional tests for ownership restrictions
+func TestUpdatePostFailWhenWrongUser(t *testing.T) {
+	suite := NewTestSuite(t)
+	defer suite.TearDown()
+
+	// Create first user and their post
+	user1 := UserFactory("testPassword123",
+		WithEmail("user1@example.com"),
+		WithName("User One"),
+	)
+	user1Post := PostFactory(WithUserID(user1.ID))
+
+	// Create second user who tries to update the post
+	UserFactory("testPassword123",
+		WithEmail("user2@example.com"),
+		WithName("User Two"),
+	)
+
+	requestBody := map[string]string{
+		"title":   "Hacked Title",
+		"content": "Hacked Content",
+	}
+
+	jsonData, _ := json.Marshal(requestBody)
+	req, _ := http.NewRequest("PUT", "/posts/"+strconv.FormatUint(uint64(user1Post.ID), 10), bytes.NewBuffer(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "user2@example.com"))
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	var response schemas.ErrorResponse
+	json.Unmarshal(w.Body.Bytes(), &response)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+	assert.Contains(t, response.Error, "You can only update your own posts")
+}
+
+func TestDeletePostFailWhenWrongUser(t *testing.T) {
+	suite := NewTestSuite(t)
+	defer suite.TearDown()
+
+	// Create first user and their post
+	user1 := UserFactory("testPassword123",
+		WithEmail("user1-delete@example.com"),
+		WithName("User One"),
+	)
+	post := PostFactory(WithUserID(user1.ID))
+
+	// Create second user who tries to delete the post
+	_ = UserFactory("testPassword123",
+		WithEmail("user2-delete@example.com"),
+		WithName("User Two"),
+	)
+
+	req, _ := http.NewRequest("DELETE", "/posts/"+strconv.FormatUint(uint64(post.ID), 10), nil)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "user2-delete@example.com"))
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	var response schemas.ErrorResponse
+	json.Unmarshal(w.Body.Bytes(), &response)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+	assert.Contains(t, response.Error, "You can only delete your own posts")
+}
+
+// func TestListPostsWithMineFilter(t *testing.T) {
+// 	suite := NewTestSuite(t)
+// 	defer suite.TearDown()
+
+// 	// Create first user with 2 posts
+// 	user1 := UserFactory("testPassword123",
+// 		WithEmail("user1-mine@example.com"),
+// 		WithName("User One"),
+// 	)
+// 	_ = PostFactory(WithUserID(user1.ID), WithTitle("User1 Post 1"))
+// 	_ = PostFactory(WithUserID(user1.ID), WithTitle("User1 Post 2"))
+
+// 	// Create second user with 1 post
+// 	user2 := UserFactory("testPassword123",
+// 		WithEmail("user2-mine@example.com"),
+// 		WithName("User Two"),
+// 	)
+// 	_ = PostFactory(WithUserID(user2.ID), WithTitle("User2 Post 1"))
+
+// 	// Login as user1 and filter by "mine"
+// 	req, _ := http.NewRequest("GET", "/posts?mine=true", nil)
+// 	req.Header.Set("Content-Type", "application/json")
+// 	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "user1-mine@example.com"))
+
+// 	w := httptest.NewRecorder()
+// 	suite.router.ServeHTTP(w, req)
+
+// 	var response schemas.ListPostsResponse
+// 	json.Unmarshal(w.Body.Bytes(), &response)
+
+// 	assert.Equal(t, http.StatusOK, w.Code)
+// 	assert.Equal(t, 2, len(response.Data)) // Should only see user1's posts
+
+// 	// Verify post titles
+// 	postTitles := make([]string, len(response.Data))
+// 	for i, post := range response.Data {
+// 		postTitles[i] = post.Title
+// 	}
+// 	assert.Contains(t, postTitles, "User1 Post 1")
+// 	assert.Contains(t, postTitles, "User1 Post 2")
+// 	assert.NotContains(t, postTitles, "User2 Post 1")
+// }

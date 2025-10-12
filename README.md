@@ -82,6 +82,7 @@ go-crud/
 - **PostgreSQL** - Database
 - **godotenv** - Environment variable management
 - **go-playground/validator** - Request validation
+- **golang-jwt/jwt/v5** - JWT token generation and validation
 
 ## ⚡ Getting Started
 

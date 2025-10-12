@@ -113,6 +113,30 @@ func (v *UserViews) PartialUpdateUser(c *gin.Context) {
 		return
 	}
 
+	// Check if target user exists first
+	_, err = v.service.GetByID(uint(id))
+	if err != nil {
+		if err.Error() == "user not found" {
+			c.JSON(http.StatusNotFound, schemas.ErrorResponse{
+				Error: "User not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, schemas.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve user: %v", err),
+		})
+		return
+	}
+
+	// Then check if user is authorized to update this account
+	authenticatedUserID, exists := GetUserIDFromContext(c)
+	if !exists || authenticatedUserID != uint(id) {
+		c.JSON(http.StatusForbidden, schemas.ErrorResponse{
+			Error: "You can only update your own account",
+		})
+		return
+	}
+
 	var input schemas.PartialUpdateUserInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
@@ -164,6 +188,30 @@ func (v *UserViews) DeleteUser(c *gin.Context) {
 		return
 	}
 
+	// Check if target user exists first
+	_, err = v.service.GetByID(uint(id))
+	if err != nil {
+		if err.Error() == "user not found" {
+			c.JSON(http.StatusNotFound, schemas.ErrorResponse{
+				Error: "User not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, schemas.ErrorResponse{
+			Error: fmt.Sprintf("Failed to retrieve user: %v", err),
+		})
+		return
+	}
+
+	// Then check if user is authorized to delete this account
+	authenticatedUserID, exists := GetUserIDFromContext(c)
+	if !exists || authenticatedUserID != uint(id) {
+		c.JSON(http.StatusForbidden, schemas.ErrorResponse{
+			Error: "You can only delete your own account",
+		})
+		return
+	}
+
 	if err := v.service.Delete(uint(id)); err != nil {
 		if err.Error() == "user not found" {
 			c.JSON(http.StatusNotFound, schemas.ErrorResponse{
@@ -188,7 +236,7 @@ func (v *UserViews) RegisterRoutes(router *gin.Engine) {
 	{
 		users.POST("", v.CreateUser)
 		users.GET("/:id", v.GetUserByID)
-		users.PATCH("/:id", v.PartialUpdateUser)
-		users.DELETE("/:id", v.DeleteUser)
+		users.PATCH("/:id", AuthMiddleware(), v.PartialUpdateUser)
+		users.DELETE("/:id", AuthMiddleware(), v.DeleteUser)
 	}
 }

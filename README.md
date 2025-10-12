@@ -2,11 +2,39 @@
 
 A clean and modern RESTful API built with Go, featuring a view-based architecture with structured input/output schemas and complete CRUD operations for blog posts.
 
+## 🔐 Authentication
+
+The API uses JWT (JSON Web Tokens) for authentication. All user management operations require authentication except user creation and retrieval.
+
+### Authentication Flow
+
+1. **Create user** via `POST /users` (public)
+2. **Login** via `POST /auth/login` with email/password
+3. **Receive JWT token** in response
+4. **Use token** in `Authorization: Bearer <token>` header for protected endpoints
+5. JWT tokens expire after **24 hours**
+
+### Error Codes
+- `401 Unauthorized`: Missing/invalid/expired token
+- `403 Forbidden`: Attempting to modify another user's account
+
 ## 📋 API Endpoints
+
+### 🔓 Public Endpoints
 
 | Method | Endpoint | Description | Request Body | Response |
 |--------|----------|-------------|--------------|----------|
 | GET | `/health` | Health check | - | `{"status": "healthy", "service": "go-crud-api"}` |
+| POST | `/users` | Create user account | `CreateUserInput` | `UserResponse` |
+| GET | `/users/:id` | Get user details | - | `UserResponse` |
+| POST | `/auth/login` | Authenticate user | `LoginInput` | `AuthResponse` |
+
+### 🔒 Protected Endpoints (Require JWT)
+
+| Method | Endpoint | Description | Request Body | Response |
+|--------|----------|-------------|--------------|----------|
+| PATCH | `/users/:id` | Update your account | `PartialUpdateUserInput` | `UserResponse` |
+| DELETE | `/users/:id` | Delete your account | - | `MessageResponse` |
 | POST | `/posts` | Create a new post | `CreatePostRequest` | `PostResponse` |
 | GET | `/posts?page=1&limit=10` | Get posts with pagination | Query params | `ListPostsResponse` |
 | GET | `/posts/:id` | Get post by ID | - | `PostResponse` |
@@ -77,9 +105,10 @@ go-crud/
    touch .env
    ```
    
-   Add your database configuration:
+   Add your required configuration:
    ```env
    DB_DSN=postgres://username:password@localhost:5432/database_name?sslmode=disable
+   JWT_SECRET=your-secret-key-here-change-in-production
    ```
 
 3. **Install dependencies**
@@ -153,6 +182,8 @@ gotestsum --format=dots ./test           # Minimal dot output
 
 ```
 test/
+├── auth_views_test.go     # Authentication endpoint tests
+├── users_views_test.go    # User API endpoint tests
 └── posts_views_test.go    # Post API endpoint tests
 ```
 
@@ -244,7 +275,7 @@ Clean separation of business logic:
 
 ## 🔮 Future Enhancements
 
-- [ ] Add authentication and authorization
+- [x] ~~Add authentication and authorization~~ ✅ **Completed**
 - [x] ~~Implement pagination for list endpoints~~ ✅ **Completed**
 - [x] ~~Include API documentation with Swagger~~ ✅ **Completed**
 - [x] ~~Add unit and integration tests~~ ✅ **Completed**

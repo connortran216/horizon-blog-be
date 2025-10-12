@@ -24,6 +24,39 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/login": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Login user",
+                "parameters": [
+                    {
+                        "description": "Login credentials",
+                        "name": "loginInput",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.LoginInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.AuthResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/posts": {
             "get": {
                 "tags": [
@@ -192,6 +225,113 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users": {
+            "post": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Create user",
+                "parameters": [
+                    {
+                        "description": "User data",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.CreateUserInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UserResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}": {
+            "get": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get user by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UserResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Delete user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.MessageResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Partially update user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User data",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.PartialUpdateUserInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UserResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -220,6 +360,43 @@ const docTemplate = `{
                 }
             }
         },
+        "models.User": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2023-01-01T00:00:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "connortran@gmail.com"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Connor Tran"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2023-01-01T00:00:00Z"
+                }
+            }
+        },
+        "schemas.AuthResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "user": {
+                    "$ref": "#/definitions/schemas.UserResponse"
+                }
+            }
+        },
         "schemas.CreatePostRequest": {
             "type": "object",
             "required": [
@@ -237,6 +414,28 @@ const docTemplate = `{
                     "maxLength": 255,
                     "minLength": 1,
                     "example": "My New Post"
+                }
+            }
+        },
+        "schemas.CreateUserInput": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "connor@example.com"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Connor Tran"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "abcxyz123"
                 }
             }
         },
@@ -260,11 +459,46 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.LoginInput": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "connor@example.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "password123"
+                }
+            }
+        },
         "schemas.MessageResponse": {
             "type": "object",
             "properties": {
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "schemas.PartialUpdateUserInput": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "connor@example.com"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "example": "Connor Tran"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "abcxyz123"
                 }
             }
         },
@@ -312,6 +546,18 @@ const docTemplate = `{
                     "maxLength": 255,
                     "minLength": 1,
                     "example": "Updated Post Title"
+                }
+            }
+        },
+        "schemas.UserResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "User created successfully"
                 }
             }
         }

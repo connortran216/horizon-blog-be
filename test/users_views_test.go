@@ -94,7 +94,7 @@ func TestGetUserByIDSuccess(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
 
-	user := UserFactory()
+	user := UserFactory("testPassword123")
 	req, _ := http.NewRequest("GET", "/users/"+strconv.FormatUint(uint64(user.ID), 10), nil)
 
 	w := httptest.NewRecorder()
@@ -130,7 +130,10 @@ func TestPartialUpdateUserSuccess(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
 
-	user := UserFactory()
+	user := UserFactory("testPassword123",
+		WithEmail("test-update@example.com"),
+		WithName("Test User"),
+	)
 
 	requestBody := map[string]string{
 		"name": "Updated Name",
@@ -140,6 +143,7 @@ func TestPartialUpdateUserSuccess(t *testing.T) {
 
 	req, _ := http.NewRequest("PATCH", "/users/"+strconv.FormatUint(uint64(user.ID), 10), bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-update@example.com"))
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -157,6 +161,11 @@ func TestPartialUpdateUserNotFound(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
 
+	UserFactory("testPassword123",
+		WithEmail("test-auth@example.com"),
+		WithName("Test User"),
+	)
+
 	requestBody := map[string]string{
 		"name": "Updated Name",
 	}
@@ -165,6 +174,7 @@ func TestPartialUpdateUserNotFound(t *testing.T) {
 
 	req, _ := http.NewRequest("PATCH", "/users/9999", bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-auth@example.com"))
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -181,7 +191,10 @@ func TestPartialUpdateUserValidationError(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
 
-	user := UserFactory()
+	user := UserFactory("testPassword123",
+		WithEmail("test-validation@example.com"),
+		WithName("Test User"),
+	)
 
 	requestBody := map[string]string{
 		"email": "invalid-email",
@@ -191,6 +204,7 @@ func TestPartialUpdateUserValidationError(t *testing.T) {
 
 	req, _ := http.NewRequest("PATCH", "/users/"+strconv.FormatUint(uint64(user.ID), 10), bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-validation@example.com"))
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
@@ -207,26 +221,36 @@ func TestDeleteUserSuccess(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
 
-	user := UserFactory()
+	user := UserFactory("testPassword123",
+		WithEmail("test-delete@example.com"),
+		WithName("Test User"),
+	)
 
 	req, _ := http.NewRequest("DELETE", "/users/"+strconv.FormatUint(uint64(user.ID), 10), nil)
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-delete@example.com"))
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	var response schemas.ErrorResponse
+	var response schemas.MessageResponse
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
-	assert.Equal(t, "", response.Error)
+	assert.Contains(t, response.Message, "User deleted successfully")
 }
 
 func TestDeleteUserNotFound(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
 
+	UserFactory("testPassword123",
+		WithEmail("test-delete-notfound@example.com"),
+		WithName("Test User"),
+	)
+
 	req, _ := http.NewRequest("DELETE", "/users/9999", nil)
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-delete-notfound@example.com"))
 
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)

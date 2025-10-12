@@ -18,6 +18,32 @@ definitions:
         example: "2023-01-01T00:00:00Z"
         type: string
     type: object
+  models.User:
+    properties:
+      created_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      email:
+        example: connortran@gmail.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Connor Tran
+        type: string
+      updated_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+    type: object
+  schemas.AuthResponse:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      user:
+        $ref: '#/definitions/schemas.UserResponse'
+    type: object
   schemas.CreatePostRequest:
     properties:
       content:
@@ -33,6 +59,22 @@ definitions:
     - content
     - title
     type: object
+  schemas.CreateUserInput:
+    properties:
+      email:
+        example: connor@example.com
+        type: string
+      name:
+        example: Connor Tran
+        type: string
+      password:
+        example: abcxyz123
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
   schemas.ListPostsResponse:
     properties:
       data:
@@ -46,9 +88,34 @@ definitions:
       total:
         type: integer
     type: object
+  schemas.LoginInput:
+    properties:
+      email:
+        example: connor@example.com
+        type: string
+      password:
+        example: password123
+        type: string
+    required:
+    - email
+    - password
+    type: object
   schemas.MessageResponse:
     properties:
       message:
+        type: string
+    type: object
+  schemas.PartialUpdateUserInput:
+    properties:
+      email:
+        example: connor@example.com
+        type: string
+      name:
+        example: Connor Tran
+        minLength: 3
+        type: string
+      password:
+        example: abcxyz123
         type: string
     type: object
   schemas.PatchPostRequest:
@@ -85,6 +152,14 @@ definitions:
     - content
     - title
     type: object
+  schemas.UserResponse:
+    properties:
+      data:
+        $ref: '#/definitions/models.User'
+      message:
+        example: User created successfully
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -99,6 +174,27 @@ info:
   title: Go CRUD API
   version: "1.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login credentials
+        in: body
+        name: loginInput
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.AuthResponse'
+      summary: Login user
+      tags:
+      - auth
   /posts:
     get:
       parameters:
@@ -209,6 +305,75 @@ paths:
       summary: Update post
       tags:
       - posts
+  /users:
+    post:
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateUserInput'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schemas.UserResponse'
+      summary: Create user
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.MessageResponse'
+      summary: Delete user
+      tags:
+      - users
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.UserResponse'
+      summary: Get user by ID
+      tags:
+      - users
+    patch:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.PartialUpdateUserInput'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.UserResponse'
+      summary: Partially update user
+      tags:
+      - users
 schemes:
 - http
 - https

@@ -102,3 +102,16 @@ func (s *UserService) Delete(id uint) error {
 	}
 	return nil
 }
+
+// FindByEmail finds a user by email address
+func (s *UserService) FindByEmail(email string) (*models.User, error) {
+	var user models.User
+	result := s.db.Where("email = ?", email).First(&user)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, result.Error
+	}
+	return &user, nil
+}

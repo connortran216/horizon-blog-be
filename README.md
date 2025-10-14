@@ -96,7 +96,7 @@ go-crud/
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/connortran216/go-crud.git
    cd go-crud
    ```
 

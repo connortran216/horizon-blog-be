@@ -7,18 +7,15 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 )
 
 type AuthViews struct {
 	userService *services.UserService
-	validator   *validator.Validate
 }
 
 func NewAuthViews() *AuthViews {
 	return &AuthViews{
 		userService: services.NewUserService(),
-		validator:   validator.New(),
 	}
 }
 
@@ -34,13 +31,6 @@ func (v *AuthViews) Login(c *gin.Context) {
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
 			Error: fmt.Sprintf("Invalid request data: %v", err),
-		})
-		return
-	}
-
-	if err := v.validator.Struct(input); err != nil {
-		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
-			Error: fmt.Sprintf("Validation failed: %v", err),
 		})
 		return
 	}

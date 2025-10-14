@@ -129,7 +129,7 @@ func TestLoginValidationError(t *testing.T) {
 	var response schemas.ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
-	assert.Contains(t, response.Error, "Validation failed")
+	assert.Contains(t, response.Error, "Invalid request data")
 }
 
 func TestLoginInvalidEmailFormat(t *testing.T) {
@@ -154,7 +154,7 @@ func TestLoginInvalidEmailFormat(t *testing.T) {
 	var response schemas.ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
-	assert.Contains(t, response.Error, "Validation failed")
+	assert.Contains(t, response.Error, "Invalid request data")
 }
 
 // Helper function to get JWT token for authenticated requests

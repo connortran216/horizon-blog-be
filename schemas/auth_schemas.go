@@ -1,8 +1,8 @@
 package schemas
 
 type LoginInput struct {
-	Email    string `json:"email" validate:"required,email" example:"connor@example.com"`
-	Password string `json:"password" validate:"required" example:"password123"`
+	Email    string `json:"email" binding:"required,email" example:"connor@example.com"`
+	Password string `json:"password" binding:"required" example:"password123"`
 }
 
 type AuthResponse struct {

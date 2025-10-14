@@ -11,3 +11,6 @@ build: docs
 
 test:
 	go test ./...
+
+gotestsum:
+	gotestsum --format=short-verbose ./test -- -count=1 -v

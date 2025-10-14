@@ -9,19 +9,16 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 )
 
 
 type UserViews struct {
-	service   *services.UserService
-	validator *validator.Validate
+	service *services.UserService
 }
 
 func NewUserViews() *UserViews {
 	return &UserViews{
-		service:   services.NewUserService(),
-		validator: validator.New(),
+		service: services.NewUserService(),
 	}
 }
 
@@ -40,12 +37,7 @@ func (v *UserViews) CreateUser(c *gin.Context) {
 		return
 	}
 
-	if err := v.validator.Struct(input); err != nil {
-		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
-			Error: fmt.Sprintf("Validation failed: %v", err),
-		})
-		return
-	}
+
 
 	result, err := v.service.Create(models.User{
 		Name:         input.Name,
@@ -145,12 +137,7 @@ func (v *UserViews) PartialUpdateUser(c *gin.Context) {
 		return
 	}
 
-	if err := v.validator.StructPartial(input, "Name", "Email", "Password"); err != nil {
-		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
-			Error: fmt.Sprintf("Validation failed: %v", err),
-		})
-		return
-	}
+
 
 	result, err := v.service.PartialUpdate(uint(id), input)
 	if err != nil {

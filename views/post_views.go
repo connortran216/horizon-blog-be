@@ -34,12 +34,7 @@ func (v *PostViews) CreatePost(c *gin.Context) {
 		return
 	}
 
-	if err := input.Validate(); err != nil {
-		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
-			Error: fmt.Sprintf("Validation failed: %v", err),
-		})
-		return
-	}
+
 
 	// Get authenticated user ID
 	userID, exists := GetUserIDFromContext(c)
@@ -187,12 +182,7 @@ func (v *PostViews) UpdatePost(c *gin.Context) {
 		return
 	}
 
-	if err := input.Validate(); err != nil {
-		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
-			Error: fmt.Sprintf("Validation failed: %v", err),
-		})
-		return
-	}
+
 
 	result, err := v.service.Update(uint(id), input.ToModel())
 	if err != nil {

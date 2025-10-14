@@ -6,17 +6,16 @@ import (
 	"go-crud/schemas"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 	"strconv"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-
 func TestCreatePostSuccess(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
-	
+
 	_ = UserFactory("testPassword123",
 		WithEmail("test-update@example.com"),
 		WithName("Test User"),
@@ -26,17 +25,17 @@ func TestCreatePostSuccess(t *testing.T) {
 		"title":   "Test Post Title",
 		"content": "This is a test post content",
 	}
-	
+
 	jsonData, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequest("POST", "/posts", bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-update@example.com"))
-	
+
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
-	
+
 	assert.Equal(t, http.StatusCreated, w.Code)
-	
+
 	var response schemas.PostResponse
 	json.Unmarshal(w.Body.Bytes(), &response)
 	assert.Equal(t, "Test Post Title", response.Data.Title)
@@ -72,9 +71,8 @@ func TestCreatePostValidationError(t *testing.T) {
 
 	var response schemas.ErrorResponse
 	json.Unmarshal(w.Body.Bytes(), &response)
-	assert.Contains(t, response.Error, "Validation failed: Key: 'CreatePostRequest.Title' Error:Field validation for 'Title' failed on the 'required' tag")
+	assert.Contains(t, response.Error, "Invalid request data: Key: 'CreatePostRequest.Title' Error:Field validation for 'Title' failed on the 'required' tag")
 }
-
 
 func TestGetPostByIDSuccess(t *testing.T) {
 	suite := NewTestSuite(t)
@@ -264,7 +262,7 @@ func TestUpdatePostFailWhenDataIsInvalid(t *testing.T) {
 	post := PostFactory(WithUserID(user.ID))
 
 	requestBody := map[string]string{
-		"author":   "", // Invalid non-existent field
+		"author":  "", // Invalid non-existent field
 		"content": "Updated Content",
 	}
 
@@ -280,7 +278,7 @@ func TestUpdatePostFailWhenDataIsInvalid(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &response)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, response.Error, "Validation failed: Key: 'UpdatePostRequest.Title' Error:Field validation for 'Title' failed on the 'required' tag")
+	assert.Contains(t, response.Error, "Invalid request data: Key: 'UpdatePostRequest.Title' Error:Field validation for 'Title' failed on the 'required' tag")
 }
 
 func TestPartiallyUpdatePostSuccess(t *testing.T) {
@@ -375,7 +373,7 @@ func TestPartiallyUpdatePostFailInvalidData(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &response)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, response.Error, "Validation failed: Key: 'PatchPostRequest.Title' Error:Field validation for 'Title' failed on the 'min' tag")
+	assert.Contains(t, response.Error, "Invalid request data: Key: 'PatchPostRequest.Title' Error:Field validation for 'Title' failed on the 'min' tag")
 }
 
 func TestDeletePostSuccess(t *testing.T) {

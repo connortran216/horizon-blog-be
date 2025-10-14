@@ -17,8 +17,8 @@ type ListPostsQueryParams struct {
 
 // Input Schemas
 type CreatePostRequest struct {
-	Title   string `json:"title" validate:"required,min=1,max=255" example:"My New Post"`
-	Content string `json:"content" validate:"required,min=1" example:"This is the content of my new post"`
+	Title   string `json:"title" binding:"required,min=1,max=255" example:"My New Post"`
+	Content string `json:"content" binding:"required,min=1" example:"This is the content of my new post"`
 }
 
 // Method for CreatePostRequest struct
@@ -34,8 +34,8 @@ func (r CreatePostRequest) ToModel() models.Post {
 }
 
 type UpdatePostRequest struct {
-	Title   string `json:"title" validate:"required,min=1,max=255" example:"Updated Post Title"`
-	Content string `json:"content" validate:"required,min=1" example:"Updated post content"`
+	Title   string `json:"title" binding:"required,min=1,max=255" example:"Updated Post Title"`
+	Content string `json:"content" binding:"required,min=1" example:"Updated post content"`
 }
 
 // Method for UpdatePostRequest struct
@@ -51,8 +51,8 @@ func (r UpdatePostRequest) ToModel() models.Post {
 }
 
 type PatchPostRequest struct {
-	Title   *string `json:"title,omitempty" validate:"omitempty,min=1,max=255" example:"Partially Updated Title"`
-	Content *string `json:"content,omitempty" validate:"omitempty,min=1" example:"Partially updated content"`
+	Title   *string `json:"title,omitempty" binding:"omitempty,min=1,max=255" example:"Partially Updated Title"`
+	Content *string `json:"content,omitempty" binding:"omitempty,min=1" example:"Partially updated content"`
 }
 
 // Method for PatchPostRequest struct

@@ -17,8 +17,8 @@ func TestCreateUserSuccess(t *testing.T) {
 	defer suite.TearDown()
 
 	requestBody := map[string]string{
-		"name":   "Connor Tran",
-		"email": "connortran@gmail.com",
+		"name":     "Connor Tran",
+		"email":    "connortran@gmail.com",
 		"password": "password123",
 	}
 
@@ -44,8 +44,8 @@ func TestCreateUserValidationError(t *testing.T) {
 	defer suite.TearDown()
 
 	requestBody := map[string]string{
-		"name":   "",
-		"email": "invalid-email",
+		"name":     "",
+		"email":    "invalid-email",
 		"password": "",
 	}
 
@@ -62,7 +62,7 @@ func TestCreateUserValidationError(t *testing.T) {
 	var response schemas.ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
-	assert.Contains(t, response.Error, "Validation failed")
+	assert.Contains(t, response.Error, "Invalid request data")
 }
 
 func TestCreateUserMissingFields(t *testing.T) {
@@ -70,7 +70,7 @@ func TestCreateUserMissingFields(t *testing.T) {
 	defer suite.TearDown()
 
 	requestBody := map[string]string{
-		"name":   "Connor Tran",
+		"name":     "Connor Tran",
 		"password": "password123",
 	}
 
@@ -87,7 +87,7 @@ func TestCreateUserMissingFields(t *testing.T) {
 	var response schemas.ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
-	assert.Contains(t, response.Error, "Validation failed")
+	assert.Contains(t, response.Error, "Invalid request data")
 }
 
 func TestGetUserByIDSuccess(t *testing.T) {
@@ -214,7 +214,7 @@ func TestPartialUpdateUserValidationError(t *testing.T) {
 	var response schemas.ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
-	assert.Contains(t, response.Error, "Validation failed")
+	assert.Contains(t, response.Error, "Invalid request data")
 }
 
 func TestDeleteUserSuccess(t *testing.T) {

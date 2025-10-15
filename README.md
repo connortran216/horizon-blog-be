@@ -274,15 +274,88 @@ Clean separation of business logic:
 - **Default Values**: Automatic fallback to page=1, limit=10
 - **Total Count**: Returns total records for proper pagination UI
 
+## 🔒 Security & Performance Features
+
+### Logging Middleware
+The API includes intelligent logging middleware that:
+- **Selective logging**: Only logs errors (4xx/5xx) and health check failures to avoid over-logging
+- **Structured format**: `[METHOD] PATH - STATUS_CODE - LATENCY`
+- **Error details**: Enhanced logging for 5xx errors with error context
+- **Performance tracking**: Request latency monitoring
+
+### Rate Limiting
+Implemented intelligent rate limiting for public endpoints:
+- **Public API protection**: Rate limiting applied to public endpoints only
+- **Configurable limits**: 100ms minimum interval between requests with burst capacity of 5
+- **IP-based tracking**: Per-IP address rate limiting with automatic cleanup
+- **Graceful responses**: Returns `429 Too Many Requests` with descriptive error messages
+
+Protected public endpoints:
+- `GET /health` - Health check endpoint
+- `POST /users` - User registration
+- `GET /users/:id` - Public user profiles
+- `POST /auth/login` - User authentication
+
+### Docker Containerization
+Complete containerization setup with multi-stage builds:
+
+#### Quick Start with Docker
+```bash
+# Start all services (API + PostgreSQL)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f api
+
+# Run database migrations
+docker-compose exec api go run migration/migration.go
+
+# Stop services
+docker-compose down
+```
+
+#### Docker Commands
+```bash
+# Build and run
+docker-compose up --build
+
+# Run in background
+docker-compose up -d
+
+# View service status
+docker-compose ps
+
+# View logs
+docker-compose logs -f
+
+# Stop and remove containers
+docker-compose down
+
+# Remove volumes (WARNING: This deletes database data)
+docker-compose down -v
+```
+
+#### Container Features
+- **Multi-stage build**: Optimized image size with Go 1.24.5 Alpine base
+- **Non-root user**: Security best practice with dedicated app user
+- **Health checks**: Both API and database health monitoring
+- **Database initialization**: Automatic database setup with init scripts
+- **Network isolation**: Dedicated Docker network for service communication
+
 ## 🔮 Future Enhancements
 
 - [x] ~~Add authentication and authorization~~ ✅ **Completed**
 - [x] ~~Implement pagination for list endpoints~~ ✅ **Completed**
 - [x] ~~Include API documentation with Swagger~~ ✅ **Completed**
 - [x] ~~Add unit and integration tests~~ ✅ **Completed**
-- [ ] Implement logging middleware
-- [ ] Add rate limiting
-- [ ] Docker containerization
+- [x] ~~Implement logging middleware~~ ✅ **Completed**
+- [x] ~~Add rate limiting~~ ✅ **Completed**
+- [x] ~~Docker containerization~~ ✅ **Completed**
+- [ ] Category/Tags System with Many-to-Many Relationships
+- [ ] File Upload System (Images/Media)
+- [ ] Search and Filtering Engine
+- [ ] Comments and Reactions System
+- [ ] Caching Layer with Redis Integration
 
 ## 📝 License
 

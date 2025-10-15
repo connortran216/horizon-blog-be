@@ -357,6 +357,13 @@ const docTemplate = `{
                 "updated_at": {
                     "type": "string",
                     "example": "2023-01-01T00:00:00Z"
+                },
+                "user": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },

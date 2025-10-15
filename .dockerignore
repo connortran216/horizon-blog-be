@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Test files
+test/
+*_test.go
+
+# Temporary files
+tmp/
+temp/
+
+# Build artifacts
+main
+*.exe
+
+# Environment files (if they contain secrets)
+.env.local
+.env.*.local
+
+# Dependencies
+vendor/

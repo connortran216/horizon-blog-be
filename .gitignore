@@ -34,3 +34,5 @@ go-crud
 
 # User-specific files, folders
 .vscode/
+.claude/
+.clinerules/

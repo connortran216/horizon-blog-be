@@ -50,5 +50,8 @@ func SetupRouter() *gin.Engine {
 	authViews := views.NewAuthViews()
 	authViews.RegisterRoutes(router)
 
+	tagViews := views.NewTagViews()
+	tagViews.RegisterRoutes(router)
+
 	return router
 }

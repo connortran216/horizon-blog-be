@@ -2,23 +2,21 @@ package schemas
 
 import (
 	"go-crud/models"
-	"github.com/go-playground/validator/v10"
 )
-
-
-var validate = validator.New()
 
 // Query Parameters
 type ListPostsQueryParams struct {
-	Page   int  `json:"page" form:"page" validate:"omitempty,min=1" default:"1"`
-	Limit  int  `json:"limit" form:"limit" validate:"omitempty,min=1,max=100" default:"10"`
-	UserID *uint `json:"user_id,omitempty" form:"user_id"`
+	Page     int    `json:"page" form:"page" validate:"omitempty,min=1" default:"1"`
+	Limit    int    `json:"limit" form:"limit" validate:"omitempty,min=1,max=100" default:"10"`
+	UserID   *uint  `json:"user_id,omitempty" form:"user_id"`
+	TagNames []string `json:"tag_names,omitempty" form:"tags"` // Filter by tag names
 }
 
 // Input Schemas
 type CreatePostRequest struct {
-	Title   string `json:"title" binding:"required,min=1,max=255" example:"My New Post"`
-	Content string `json:"content" binding:"required,min=1" example:"This is the content of my new post"`
+	Title    string   `json:"title" binding:"required,min=1,max=255" example:"My New Post"`
+	Content  string   `json:"content" binding:"required,min=1" example:"This is the content of my new post"`
+	TagNames []string `json:"tag_names,omitempty" example:"golang,web-development,tutorial"`
 }
 
 // Method for CreatePostRequest struct

@@ -22,7 +22,7 @@ func NewPostService() *PostService {
 }
 
 // Create creates a new post
-func (s *PostService) Create(post models.Post) (*models.Post, error) {
+func (s *PostService) Create(post models.Post, tagNames []string) (*models.Post, error) {
 	if post.Title == "" {
 		return nil, errors.New("title is required")
 	}
@@ -30,18 +30,42 @@ func (s *PostService) Create(post models.Post) (*models.Post, error) {
 		return nil, errors.New("content is required")
 	}
 
-	result := s.db.Create(&post)
+	// Start transaction
+	tx := s.db.Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	// Create the post
+	result := tx.Create(&post)
 	if result.Error != nil {
+		tx.Rollback()
 		return nil, result.Error
 	}
 
-	return &post, nil
+	// Associate tags if provided
+	if len(tagNames) > 0 {
+		tagService := NewTagService()
+		err := tagService.AssociateTagsWithPost(post.ID, tagNames)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	// Load the post with tags
+	return s.GetByID(post.ID)
 }
 
 // GetByID retrieves a post by ID
 func (s *PostService) GetByID(id uint) (*models.Post, error) {
 	var post models.Post
-	result := s.db.First(&post, id)
+	result := s.db.Preload("User").Preload("Tags").First(&post, id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, errors.New("post not found")
@@ -68,11 +92,31 @@ func (s *PostService) GetWithPagination(query schemas.ListPostsQueryParams) ([]m
 	var posts []models.Post
 	var total int64
 
-	// Build query with optional UserID filter
+	// Build query with optional filters
 	db := s.db.Model(&models.Post{})
 
 	if query.UserID != nil {
 		db = db.Where("user_id = ?", *query.UserID)
+	}
+
+	// Filter by tags if provided
+	if len(query.TagNames) > 0 {
+		// Get tag IDs from tag names
+		tagService := NewTagService()
+		var tagIDs []uint
+		for _, tagName := range query.TagNames {
+			tag, err := tagService.GetByName(tagName)
+			if err == nil {
+				tagIDs = append(tagIDs, tag.ID)
+			}
+		}
+
+		if len(tagIDs) > 0 {
+			// Join with post_tags and filter by tag IDs
+			db = db.Joins("JOIN post_tags ON posts.id = post_tags.post_id").
+				Where("post_tags.tag_id IN ?", tagIDs).
+				Group("posts.id")
+		}
 	}
 
 	// Get total count
@@ -83,8 +127,8 @@ func (s *PostService) GetWithPagination(query schemas.ListPostsQueryParams) ([]m
 	// Calculate offset
 	offset := (query.Page - 1) * query.Limit
 
-	// Get paginated results
-	result := db.Preload("User").Limit(query.Limit).Offset(offset).Find(&posts)
+	// Get paginated results with preloading
+	result := db.Preload("User").Preload("Tags").Limit(query.Limit).Offset(offset).Find(&posts)
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}

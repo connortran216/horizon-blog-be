@@ -36,11 +36,23 @@ The API uses JWT (JSON Web Tokens) for authentication. All user management opera
 | PATCH | `/users/:id` | Update your account | `PartialUpdateUserInput` | `UserResponse` |
 | DELETE | `/users/:id` | Delete your account | - | `MessageResponse` |
 | POST | `/posts` | Create a new post | `CreatePostRequest` | `PostResponse` |
-| GET | `/posts?page=1&limit=10` | Get posts with pagination | Query params | `ListPostsResponse` |
+| GET | `/posts?page=1&limit=10&tags=golang,tutorial` | Get posts with pagination and tag filtering | Query params | `ListPostsResponse` |
 | GET | `/posts/:id` | Get post by ID | - | `PostResponse` |
 | PUT | `/posts/:id` | Update entire post | `UpdatePostRequest` | `PostResponse` |
 | PATCH | `/posts/:id` | Partial update post | `PatchPostRequest` | `PostResponse` |
 | DELETE | `/posts/:id` | Delete post | - | `MessageResponse` |
+
+### 🏷️ Tag Management Endpoints
+
+| Method | Endpoint | Description | Request Body | Response |
+|--------|----------|-------------|--------------|----------|
+| POST | `/tags` | Create a new tag | `CreateTagRequest` | `TagResponse` |
+| GET | `/tags` | List all tags | Query params | `ListTagsResponse` |
+| GET | `/tags/popular` | Get popular tags | Query params | `ListTagsResponse` |
+| GET | `/tags/search?q=golang` | Search tags | Query params | `ListTagsResponse` |
+| GET | `/tags/:id` | Get tag by ID | - | `TagResponse` |
+| PUT | `/tags/:id` | Update tag | `UpdateTagRequest` | `TagResponse` |
+| DELETE | `/tags/:id` | Delete tag | - | `MessageResponse` |
 
 ## 🏗️ Project Structure
 
@@ -117,9 +129,16 @@ go-crud/
    go mod tidy
    ```
 
-4. **Run database migration**
+4. **Run database migrations**
    ```bash
-   go run migration/migration.go
+   # Apply all migrations
+   go run migration/migrate.go up
+
+   # Check current migration version
+   go run migration/migrate.go version
+
+   # Rollback all migrations (if needed)
+   go run migration/migrate.go down
    ```
 
 5. **Start the server**
@@ -351,7 +370,7 @@ docker-compose down -v
 - [x] ~~Implement logging middleware~~ ✅ **Completed**
 - [x] ~~Add rate limiting~~ ✅ **Completed**
 - [x] ~~Docker containerization~~ ✅ **Completed**
-- [ ] Category/Tags System with Many-to-Many Relationships
+- [x] ~~Category/Tags System with Many-to-Many Relationships~~ ✅ **Completed**
 - [ ] File Upload System (Images/Media)
 - [ ] Search and Filtering Engine
 - [ ] Comments and Reactions System

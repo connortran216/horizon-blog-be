@@ -6,6 +6,7 @@ import (
 	"go-crud/services"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -48,7 +49,7 @@ func (v *PostViews) CreatePost(c *gin.Context) {
 	postModel := input.ToModel()
 	postModel.UserID = userID
 
-	result, err := v.service.Create(postModel)
+	result, err := v.service.Create(postModel, input.TagNames)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, schemas.ErrorResponse{
 			Error: fmt.Sprintf("Failed to create post: %v", err),
@@ -88,6 +89,24 @@ func (v *PostViews) ListPosts(c *gin.Context) {
 		if c.Query("mine") == "true" {
 			query.UserID = &userID
 		}
+	}
+
+	// Handle tag filtering
+	if tagsParam := c.Query("tags"); tagsParam != "" {
+		// Split comma-separated tag names
+		tagNames := strings.Split(tagsParam, ",")
+		// Trim spaces and filter out empty strings
+		for i, tag := range tagNames {
+			tagNames[i] = strings.TrimSpace(tag)
+		}
+		// Filter out empty tag names
+		var filteredTags []string
+		for _, tag := range tagNames {
+			if tag != "" {
+				filteredTags = append(filteredTags, tag)
+			}
+		}
+		query.TagNames = filteredTags
 	}
 
 	results, total, err := v.service.GetWithPagination(query)

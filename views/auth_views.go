@@ -63,7 +63,7 @@ func (v *AuthViews) Login(c *gin.Context) {
 
 	response := schemas.AuthResponse{
 		Token: token,
-		User: schemas.UserResponse{
+		UserResponse: schemas.UserResponse{
 			Data:    *user,
 			Message: "Login successful",
 		},

@@ -20,6 +20,7 @@ func SetupRouter() *gin.Engine {
 	router := gin.Default()
 
 	// Add global middlewares
+	router.Use(middleware.CORSMiddleware())
 	router.Use(middleware.LoggerMiddleware())
 	router.Use(middleware.ErrorLoggerMiddleware())
 

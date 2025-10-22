@@ -1,0 +1,10 @@
+{
+  "name": "Go CRUD Dev",
+  "build": {
+    "dockerfile": "./Dockerfile"
+  },
+  "remoteUser": "root",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  }
+}

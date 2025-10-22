@@ -32,10 +32,9 @@ func (r CreatePostRequest) ToModel() models.Post {
 }
 
 type UpdatePostRequest struct {
-	Title       string `json:"title" binding:"required,min=1,max=255" example:"Updated Post Title"`
-	Content     string `json:"content" binding:"required,min=1" example:"Updated post content"`
-	IsDraft     bool   `json:"is_draft,omitempty" example:"false"`
-	IsPublished bool   `json:"is_published,omitempty" example:"true"`
+	Title   string           `json:"title" binding:"required,min=1,max=255" example:"Updated Post Title"`
+	Content string           `json:"content" binding:"required,min=1" example:"Updated post content"`
+	Status  models.PostStatus `json:"status" binding:"required,oneof=draft published" example:"published"`
 }
 
 // Method for UpdatePostRequest struct
@@ -45,18 +44,16 @@ func (r UpdatePostRequest) Validate() error {
 
 func (r UpdatePostRequest) ToModel() models.Post {
 	return models.Post{
-		Title:       r.Title,
-		Content:     r.Content,
-		IsDraft:     r.IsDraft,
-		IsPublished: r.IsPublished,
+		Title:   r.Title,
+		Content: r.Content,
+		Status:  r.Status,
 	}
 }
 
 type PatchPostRequest struct {
-	Title       *string `json:"title,omitempty" binding:"omitempty,min=1,max=255" example:"Partially Updated Title"`
-	Content     *string `json:"content,omitempty" binding:"omitempty,min=1" example:"Partially updated content"`
-	IsDraft     *bool   `json:"is_draft,omitempty" example:"false"`
-	IsPublished *bool   `json:"is_published,omitempty" example:"true"`
+	Title   *string              `json:"title,omitempty" binding:"omitempty,min=1,max=255" example:"Partially Updated Title"`
+	Content *string              `json:"content,omitempty" binding:"omitempty,min=1" example:"Partially updated content"`
+	Status  *models.PostStatus `json:"status,omitempty" binding:"omitempty,oneof=draft published" example:"published"`
 }
 
 // Method for PatchPostRequest struct
@@ -65,7 +62,7 @@ func (r PatchPostRequest) Validate() error {
 }
 
 func (r PatchPostRequest) IsEmpty() bool {
-	return r.Title == nil && r.Content == nil && r.IsDraft == nil && r.IsPublished == nil
+	return r.Title == nil && r.Content == nil && r.Status == nil
 }
 
 // Method for PatchPostRequest struct
@@ -77,11 +74,8 @@ func (r PatchPostRequest) ToMap() map[string]interface{} {
 	if r.Content != nil {
 		data["content"] = *r.Content
 	}
-	if r.IsDraft != nil {
-		data["is_draft"] = *r.IsDraft
-	}
-	if r.IsPublished != nil {
-		data["is_published"] = *r.IsPublished
+	if r.Status != nil {
+		data["status"] = *r.Status
 	}
 	return data
 }

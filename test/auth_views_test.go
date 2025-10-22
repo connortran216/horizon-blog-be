@@ -46,9 +46,9 @@ func TestLoginSuccess(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, response.Token)
-	assert.Equal(t, testUser.ID, response.User.Data.ID)
-	assert.Equal(t, testUser.Email, response.User.Data.Email)
-	assert.Equal(t, testUser.Name, response.User.Data.Name)
+	assert.Equal(t, testUser.ID, response.Data.ID)
+	assert.Equal(t, testUser.Email, response.Data.Email)
+	assert.Equal(t, testUser.Name, response.Data.Name)
 }
 
 func TestLoginInvalidEmail(t *testing.T) {

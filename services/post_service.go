@@ -160,6 +160,9 @@ func (s *PostService) Update(id uint, updatedPost models.Post) (*models.Post, er
 	// Update fields
 	post.Title = updatedPost.Title
 	post.Content = updatedPost.Content
+	if updatedPost.Status != "" {
+		post.Status = updatedPost.Status
+	}
 
 	// Save changes
 	result = s.db.Save(&post)
@@ -197,6 +200,14 @@ func (s *PostService) PartialUpdate(id uint, partialData map[string]interface{})
 			post.Content = contentStr
 		} else if contentStr == "" {
 			return nil, errors.New("content cannot be empty")
+		}
+	}
+
+	if status, exists := partialData["status"]; exists {
+		if statusEnum, ok := status.(models.PostStatus); ok && (statusEnum == models.Draft || statusEnum == models.Published) {
+			post.Status = statusEnum
+		} else {
+			return nil, errors.New("invalid status: must be 'draft' or 'published'")
 		}
 	}
 

@@ -201,6 +201,7 @@ func TestUpdatePostSuccess(t *testing.T) {
 	requestBody := map[string]string{
 		"title":   "Updated Title",
 		"content": "Updated Content",
+		"status":  "published",
 	}
 
 	jsonData, _ := json.Marshal(requestBody)
@@ -264,6 +265,7 @@ func TestUpdatePostFailWhenDataIsInvalid(t *testing.T) {
 	requestBody := map[string]string{
 		"author":  "", // Invalid non-existent field
 		"content": "Updated Content",
+		"status":  "published",
 	}
 
 	jsonData, _ := json.Marshal(requestBody)
@@ -450,6 +452,7 @@ func TestUpdatePostFailWhenWrongUser(t *testing.T) {
 	requestBody := map[string]string{
 		"title":   "Hacked Title",
 		"content": "Hacked Content",
+		"status":  "published",
 	}
 
 	jsonData, _ := json.Marshal(requestBody)

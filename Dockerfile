@@ -1,16 +1,16 @@
 # Build stage
 FROM golang:1.25.3-alpine AS builder
 
-# Install necessary packages
+# Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata
 
 # Set working directory
 WORKDIR /app
 
-# Copy go mod files
+# Copy go mod files first for better caching
 COPY go.mod go.sum ./
 
-# Download dependencies
+# Download dependencies (cached if go.mod/go.sum haven't changed)
 RUN go mod download
 
 # Copy source code
@@ -22,40 +22,37 @@ RUN go install github.com/swaggo/swag/cmd/swag@latest
 # Generate swagger docs
 RUN swag init -g main.go
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -installsuffix cgo -o main .
+# Build the application with optimizations
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags='-w -s -extldflags "-static"' \
+    -a -installsuffix cgo \
+    -o main .
 
-# Final stage
-FROM ubuntu:latest
+# Final stage - using alpine for minimal size with basic debugging tools
+FROM alpine:latest
 
-# Install ca-certificates for HTTPS requests
-RUN apt-get update && apt-get install -y ca-certificates tzdata wget golang-go && apt-get clean
+# Install only essential runtime dependencies
+RUN apk --no-cache add ca-certificates tzdata wget && \
+    addgroup -g 1000 appgroup && \
+    adduser -D -u 1000 -G appgroup appuser
 
-# Create app user
-RUN groupadd -r appgroup && useradd -r -g appgroup appuser
-
-WORKDIR /root/
+# Set working directory
+WORKDIR /home/appuser
 
 # Copy the binary from builder stage
-COPY --from=builder /app/main .
+COPY --from=builder /app/main ./main
 
 # Copy generated swagger docs
 COPY --from=builder /app/docs ./docs
 
 # Copy migration files
-COPY --from=builder /app/migration ./migration
-
-# Create home directory for appuser
-RUN mkdir -p /home/appuser && chown -R appuser:appgroup /home/appuser
-
-# Copy the whole repo to /home/appuser
-COPY . /home/appuser
+COPY --from=builder /app/migrations ./migrations
 
 # Change ownership to app user
-RUN chown -R appuser:appgroup /root/
+RUN chown -R appuser:appgroup /home/appuser
 
-# # Switch to non-root user
-# USER appuser
+# Switch to non-root user
+USER appuser
 
 # Expose port
 EXPOSE 8080

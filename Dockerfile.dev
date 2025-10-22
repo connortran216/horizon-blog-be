@@ -1,0 +1,33 @@
+# Development Dockerfile - Full dev environment for remote container coding
+FROM golang:1.25.3-alpine
+
+# Install development tools for coding inside container
+RUN apk add --no-cache \
+    git ca-certificates tzdata \
+    bash zsh vim nano curl wget \
+    make build-base
+
+# Set working directory
+WORKDIR /app
+
+# Install Go development tools
+RUN go install github.com/air-verse/air@latest && \
+    go install github.com/swaggo/swag/cmd/swag@latest
+
+# Copy go mod files for dependency caching
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Generate swagger docs
+RUN swag init -g main.go
+
+# Expose port
+EXPOSE 8080
+
+# Keep container alive for exec access (run air manually when needed)
+CMD ["tail", "-f", "/dev/null"]

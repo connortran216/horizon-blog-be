@@ -6,18 +6,20 @@ import (
 
 // Query Parameters
 type ListPostsQueryParams struct {
-	Page     int    `json:"page" form:"page" validate:"omitempty,min=1" default:"1"`
-	Limit    int    `json:"limit" form:"limit" validate:"omitempty,min=1,max=100" default:"10"`
-	UserID   *uint  `json:"user_id,omitempty" form:"user_id"`
-	TagNames []string `json:"tag_names,omitempty" form:"tags"` // Filter by tag names
+	Page     int              `json:"page" form:"page" validate:"omitempty,min=1" default:"1"`
+	Limit    int              `json:"limit" form:"limit" validate:"omitempty,min=1,max=100" default:"10"`
+	UserID   *uint            `json:"user_id,omitempty" form:"user_id"`
+	Status   *models.PostStatus `json:"status,omitempty" form:"status"` // Filter by status
+	TagNames []string         `json:"tag_names,omitempty" form:"tags"` // Filter by tag names
 }
 
 // Input Schemas
 type CreatePostRequest struct {
-	Title           string   `json:"title" binding:"required,min=1,max=255" example:"My New Post"`
-	ContentMarkdown string   `json:"content_markdown" binding:"required,min=1" example:"# My Post\n\nThis is **markdown**"`
-	ContentJSON     string   `json:"content_json" binding:"required,min=1" example:"{\"type\":\"doc\",\"content\":[]}"`
-	TagNames        []string `json:"tag_names,omitempty" example:"golang,web-development,tutorial"`
+	Title           string            `json:"title" binding:"required,min=1,max=255" example:"My New Post"`
+	ContentMarkdown string            `json:"content_markdown" binding:"required,min=1" example:"# My Post\n\nThis is **markdown**"`
+	ContentJSON     string            `json:"content_json" binding:"required,min=1" example:"{\"type\":\"doc\",\"content\":[]}"`
+	Status          *models.PostStatus `json:"status,omitempty" binding:"omitempty,oneof=draft published" example:"draft"`
+	TagNames        []string          `json:"tag_names,omitempty" example:"golang,web-development,tutorial"`
 }
 
 // Method for CreatePostRequest struct
@@ -26,11 +28,20 @@ func (r CreatePostRequest) Validate() error {
 }
 
 func (r CreatePostRequest) ToModel() models.Post {
-	return models.Post{
+	post := models.Post{
 		Title:           r.Title,
 		ContentMarkdown: r.ContentMarkdown,
 		ContentJSON:     r.ContentJSON,
 	}
+
+	// If status is provided, use it; otherwise default to draft
+	if r.Status != nil {
+		post.Status = *r.Status
+	} else {
+		post.Status = models.Draft
+	}
+
+	return post
 }
 
 type UpdatePostRequest struct {

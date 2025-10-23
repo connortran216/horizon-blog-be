@@ -26,7 +26,7 @@ func NewUserViews() *UserViews {
 // @Summary Create user
 // @Tags users
 // @Param user body schemas.CreateUserInput true "User data"
-// @Success 201 {object} schemas.UserResponse
+// @Success 201 {object} schemas.AuthResponse
 // @Router /users [post]
 func (v *UserViews) CreateUser(c *gin.Context) {
 	var input schemas.CreateUserInput
@@ -51,9 +51,21 @@ func (v *UserViews) CreateUser(c *gin.Context) {
 		return
 	}
 
-	response := schemas.UserResponse{
-		Data:    *result,
-		Message: "User created successfully",
+	// Generate JWT token for newly registered user
+	token, err := services.GenerateToken(*result)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, schemas.ErrorResponse{
+			Error: fmt.Sprintf("Failed to generate token: %v", err),
+		})
+		return
+	}
+
+	response := schemas.AuthResponse{
+		Token: token,
+		UserResponse: schemas.UserResponse{
+			Data:    *result,
+			Message: "User created successfully",
+		},
 	}
 	c.JSON(http.StatusCreated, response)
 }
@@ -217,11 +229,76 @@ func (v *UserViews) DeleteUser(c *gin.Context) {
 	})
 }
 
+// @Summary List user's posts by status
+// @Tags users
+// @Param status query string false "Post status (draft or published)"
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Items per page" default(10)
+// @Success 200 {object} schemas.ListPostsResponse
+// @Router /users/me/posts [get]
+func (v *UserViews) ListUserPosts(c *gin.Context) {
+	// Get authenticated user ID
+	userID, exists := GetUserIDFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
+			Error: "User not authenticated",
+		})
+		return
+	}
+
+	var query schemas.ListPostsQueryParams
+	query.Page, _ = strconv.Atoi(c.Query("page"))
+	query.Limit, _ = strconv.Atoi(c.Query("limit"))
+
+	// Set defaults if not provided
+	if query.Page == 0 {
+		query.Page = 1
+	}
+	if query.Limit == 0 {
+		query.Limit = 10
+	}
+
+	// Set user ID to authenticated user
+	query.UserID = &userID
+
+	// Handle status filtering
+	if statusParam := c.Query("status"); statusParam != "" {
+		status := models.PostStatus(statusParam)
+		// Validate status value
+		if status != models.Draft && status != models.Published {
+			c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
+				Error: "Invalid status: must be 'draft' or 'published'",
+			})
+			return
+		}
+		query.Status = &status
+	}
+
+	// Use post service to get posts
+	postService := services.NewPostService()
+	results, total, err := postService.GetWithPagination(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, schemas.ErrorResponse{
+			Error: fmt.Sprintf("Failed to fetch posts: %v", err),
+		})
+		return
+	}
+
+	response := schemas.ListPostsResponse{
+		Data:  results,
+		Limit: query.Limit,
+		Page:  query.Page,
+		Total: int(total),
+	}
+	c.JSON(http.StatusOK, response)
+}
+
 // RegisterRoutes registers user-related routes
 func (v *UserViews) RegisterRoutes(router *gin.Engine) {
 	users := router.Group("/users")
 	{
 		users.POST("", v.CreateUser)
+		users.GET("/me/posts", AuthMiddleware(), v.ListUserPosts)
 		users.GET("/:id", v.GetUserByID)
 		users.PATCH("/:id", AuthMiddleware(), v.PartialUpdateUser)
 		users.DELETE("/:id", AuthMiddleware(), v.DeleteUser)

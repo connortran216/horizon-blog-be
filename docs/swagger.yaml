@@ -2,8 +2,14 @@ basePath: /
 definitions:
   models.Post:
     properties:
-      content:
-        example: This is the content of my first post
+      content_json:
+        example: '{"type":"doc","content":[]}'
+        type: string
+      content_markdown:
+        example: |-
+          # My First Post
+
+          This is **markdown** content
         type: string
       created_at:
         example: "2023-01-01T00:00:00Z"
@@ -11,6 +17,14 @@ definitions:
       id:
         example: 1
         type: integer
+      status:
+        allOf:
+        - $ref: '#/definitions/models.PostStatus'
+        example: draft
+      tags:
+        items:
+          $ref: '#/definitions/models.Tag'
+        type: array
       title:
         example: My First Post
         type: string
@@ -21,6 +35,32 @@ definitions:
         $ref: '#/definitions/models.User'
       user_id:
         example: 1
+        type: integer
+    type: object
+  models.PostStatus:
+    enum:
+    - draft
+    - published
+    type: string
+    x-enum-varnames:
+    - Draft
+    - Published
+  models.Tag:
+    properties:
+      created_at:
+        type: string
+      description:
+        example: Technology related posts
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: technology
+        type: string
+      updated_at:
+        type: string
+      usage_count:
         type: integer
     type: object
   models.User:
@@ -43,26 +83,66 @@ definitions:
     type: object
   schemas.AuthResponse:
     properties:
+      data:
+        $ref: '#/definitions/models.User'
+      message:
+        example: User created successfully
+        type: string
       token:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
-      user:
-        $ref: '#/definitions/schemas.UserResponse'
     type: object
   schemas.CreatePostRequest:
     properties:
-      content:
-        example: This is the content of my new post
+      content_json:
+        example: '{"type":"doc","content":[]}'
         minLength: 1
         type: string
+      content_markdown:
+        example: |-
+          # My Post
+
+          This is **markdown**
+        minLength: 1
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/models.PostStatus'
+        enum:
+        - draft
+        - published
+        example: draft
+      tag_names:
+        example:
+        - golang
+        - web-development
+        - tutorial
+        items:
+          type: string
+        type: array
       title:
         example: My New Post
         maxLength: 255
         minLength: 1
         type: string
     required:
-    - content
+    - content_json
+    - content_markdown
     - title
+    type: object
+  schemas.CreateTagRequest:
+    properties:
+      description:
+        example: Go programming language
+        maxLength: 500
+        type: string
+      name:
+        example: golang
+        maxLength: 50
+        minLength: 2
+        type: string
+    required:
+    - name
     type: object
   schemas.CreateUserInput:
     properties:
@@ -90,6 +170,15 @@ definitions:
         type: integer
       page:
         type: integer
+      total:
+        type: integer
+    type: object
+  schemas.ListTagsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.Tag'
+        type: array
       total:
         type: integer
     type: object
@@ -125,10 +214,24 @@ definitions:
     type: object
   schemas.PatchPostRequest:
     properties:
-      content:
-        example: Partially updated content
+      content_json:
+        example: '{"type":"doc","content":[]}'
         minLength: 1
         type: string
+      content_markdown:
+        example: |-
+          # Updated
+
+          Partial markdown
+        minLength: 1
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/models.PostStatus'
+        enum:
+        - draft
+        - published
+        example: published
       title:
         example: Partially Updated Title
         maxLength: 255
@@ -142,20 +245,55 @@ definitions:
       message:
         type: string
     type: object
+  schemas.TagResponse:
+    properties:
+      data:
+        $ref: '#/definitions/models.Tag'
+      message:
+        type: string
+    type: object
   schemas.UpdatePostRequest:
     properties:
-      content:
-        example: Updated post content
+      content_json:
+        example: '{"type":"doc","content":[]}'
         minLength: 1
         type: string
+      content_markdown:
+        example: |-
+          # Updated
+
+          Markdown content
+        minLength: 1
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/models.PostStatus'
+        enum:
+        - draft
+        - published
+        example: published
       title:
         example: Updated Post Title
         maxLength: 255
         minLength: 1
         type: string
     required:
-    - content
+    - content_json
+    - content_markdown
+    - status
     - title
+    type: object
+  schemas.UpdateTagRequest:
+    properties:
+      description:
+        example: Updated description
+        maxLength: 500
+        type: string
+      name:
+        example: go-programming
+        maxLength: 50
+        minLength: 2
+        type: string
     type: object
   schemas.UserResponse:
     properties:
@@ -310,6 +448,141 @@ paths:
       summary: Update post
       tags:
       - posts
+  /tags:
+    get:
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - default: name
+        description: Sort by
+        enum:
+        - name
+        - usage_count
+        - created_at
+        in: query
+        name: sort
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ListTagsResponse'
+      summary: List tags
+      tags:
+      - tags
+    post:
+      parameters:
+      - description: Tag data
+        in: body
+        name: tag
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateTagRequest'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schemas.TagResponse'
+      summary: Create tag
+      tags:
+      - tags
+  /tags/{id}:
+    delete:
+      parameters:
+      - description: Tag ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.MessageResponse'
+      summary: Delete tag
+      tags:
+      - tags
+    get:
+      parameters:
+      - description: Tag ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.TagResponse'
+      summary: Get tag
+      tags:
+      - tags
+    put:
+      parameters:
+      - description: Tag ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Tag data
+        in: body
+        name: tag
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.UpdateTagRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.TagResponse'
+      summary: Update tag
+      tags:
+      - tags
+  /tags/popular:
+    get:
+      parameters:
+      - default: 10
+        description: Limit number of tags
+        in: query
+        name: limit
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ListTagsResponse'
+      summary: Get popular tags
+      tags:
+      - tags
+  /tags/search:
+    get:
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 10
+        description: Limit number of results
+        in: query
+        name: limit
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ListTagsResponse'
+      summary: Search tags
+      tags:
+      - tags
   /users:
     post:
       parameters:
@@ -323,7 +596,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/schemas.UserResponse'
+            $ref: '#/definitions/schemas.AuthResponse'
       summary: Create user
       tags:
       - users
@@ -377,6 +650,31 @@ paths:
           schema:
             $ref: '#/definitions/schemas.UserResponse'
       summary: Partially update user
+      tags:
+      - users
+  /users/me/posts:
+    get:
+      parameters:
+      - description: Post status (draft or published)
+        in: query
+        name: status
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ListPostsResponse'
+      summary: List user's posts by status
       tags:
       - users
 schemes:

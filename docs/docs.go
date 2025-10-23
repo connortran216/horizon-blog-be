@@ -226,6 +226,212 @@ const docTemplate = `{
                 }
             }
         },
+        "/tags": {
+            "get": {
+                "tags": [
+                    "tags"
+                ],
+                "summary": "List tags",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Items per page",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "name",
+                            "usage_count",
+                            "created_at"
+                        ],
+                        "type": "string",
+                        "default": "name",
+                        "description": "Sort by",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ListTagsResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "tags"
+                ],
+                "summary": "Create tag",
+                "parameters": [
+                    {
+                        "description": "Tag data",
+                        "name": "tag",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.CreateTagRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.TagResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tags/popular": {
+            "get": {
+                "tags": [
+                    "tags"
+                ],
+                "summary": "Get popular tags",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Limit number of tags",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ListTagsResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tags/search": {
+            "get": {
+                "tags": [
+                    "tags"
+                ],
+                "summary": "Search tags",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Limit number of results",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ListTagsResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tags/{id}": {
+            "get": {
+                "tags": [
+                    "tags"
+                ],
+                "summary": "Get tag",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tag ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.TagResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "tags"
+                ],
+                "summary": "Update tag",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tag ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Tag data",
+                        "name": "tag",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UpdateTagRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.TagResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "tags"
+                ],
+                "summary": "Delete tag",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Tag ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.MessageResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users": {
             "post": {
                 "tags": [
@@ -247,7 +453,45 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/schemas.UserResponse"
+                            "$ref": "#/definitions/schemas.AuthResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me/posts": {
+            "get": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "List user's posts by status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post status (draft or published)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Items per page",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ListPostsResponse"
                         }
                     }
                 }
@@ -338,9 +582,13 @@ const docTemplate = `{
         "models.Post": {
             "type": "object",
             "properties": {
-                "content": {
+                "content_json": {
                     "type": "string",
-                    "example": "This is the content of my first post"
+                    "example": "{\"type\":\"doc\",\"content\":[]}"
+                },
+                "content_markdown": {
+                    "type": "string",
+                    "example": "# My First Post\n\nThis is **markdown** content"
                 },
                 "created_at": {
                     "type": "string",
@@ -349,6 +597,20 @@ const docTemplate = `{
                 "id": {
                     "type": "integer",
                     "example": 1
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.PostStatus"
+                        }
+                    ],
+                    "example": "draft"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Tag"
+                    }
                 },
                 "title": {
                     "type": "string",
@@ -364,6 +626,43 @@ const docTemplate = `{
                 "user_id": {
                     "type": "integer",
                     "example": 1
+                }
+            }
+        },
+        "models.PostStatus": {
+            "type": "string",
+            "enum": [
+                "draft",
+                "published"
+            ],
+            "x-enum-varnames": [
+                "Draft",
+                "Published"
+            ]
+        },
+        "models.Tag": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Technology related posts"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "technology"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "usage_count": {
+                    "type": "integer"
                 }
             }
         },
@@ -395,32 +694,84 @@ const docTemplate = `{
         "schemas.AuthResponse": {
             "type": "object",
             "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "User created successfully"
+                },
                 "token": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                },
-                "user": {
-                    "$ref": "#/definitions/schemas.UserResponse"
                 }
             }
         },
         "schemas.CreatePostRequest": {
             "type": "object",
             "required": [
-                "content",
+                "content_json",
+                "content_markdown",
                 "title"
             ],
             "properties": {
-                "content": {
+                "content_json": {
                     "type": "string",
                     "minLength": 1,
-                    "example": "This is the content of my new post"
+                    "example": "{\"type\":\"doc\",\"content\":[]}"
+                },
+                "content_markdown": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "# My Post\n\nThis is **markdown**"
+                },
+                "status": {
+                    "enum": [
+                        "draft",
+                        "published"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.PostStatus"
+                        }
+                    ],
+                    "example": "draft"
+                },
+                "tag_names": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "golang",
+                        "web-development",
+                        "tutorial"
+                    ]
                 },
                 "title": {
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 1,
                     "example": "My New Post"
+                }
+            }
+        },
+        "schemas.CreateTagRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Go programming language"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2,
+                    "example": "golang"
                 }
             }
         },
@@ -460,6 +811,20 @@ const docTemplate = `{
                 },
                 "page": {
                     "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "schemas.ListTagsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Tag"
+                    }
                 },
                 "total": {
                     "type": "integer"
@@ -512,10 +877,27 @@ const docTemplate = `{
         "schemas.PatchPostRequest": {
             "type": "object",
             "properties": {
-                "content": {
+                "content_json": {
                     "type": "string",
                     "minLength": 1,
-                    "example": "Partially updated content"
+                    "example": "{\"type\":\"doc\",\"content\":[]}"
+                },
+                "content_markdown": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "# Updated\n\nPartial markdown"
+                },
+                "status": {
+                    "enum": [
+                        "draft",
+                        "published"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.PostStatus"
+                        }
+                    ],
+                    "example": "published"
                 },
                 "title": {
                     "type": "string",
@@ -536,23 +918,69 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.TagResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.Tag"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "schemas.UpdatePostRequest": {
             "type": "object",
             "required": [
-                "content",
+                "content_json",
+                "content_markdown",
+                "status",
                 "title"
             ],
             "properties": {
-                "content": {
+                "content_json": {
                     "type": "string",
                     "minLength": 1,
-                    "example": "Updated post content"
+                    "example": "{\"type\":\"doc\",\"content\":[]}"
+                },
+                "content_markdown": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "# Updated\n\nMarkdown content"
+                },
+                "status": {
+                    "enum": [
+                        "draft",
+                        "published"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.PostStatus"
+                        }
+                    ],
+                    "example": "published"
                 },
                 "title": {
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 1,
                     "example": "Updated Post Title"
+                }
+            }
+        },
+        "schemas.UpdateTagRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Updated description"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2,
+                    "example": "go-programming"
                 }
             }
         },

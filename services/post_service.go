@@ -102,6 +102,10 @@ func (s *PostService) GetWithPagination(query schemas.ListPostsQueryParams) ([]m
 		db = db.Where("user_id = ?", *query.UserID)
 	}
 
+	if query.Status != nil {
+		db = db.Where("status = ?", *query.Status)
+	}
+
 	// Filter by tags if provided
 	if len(query.TagNames) > 0 {
 		// Get tag IDs from tag names

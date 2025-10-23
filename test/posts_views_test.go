@@ -22,8 +22,9 @@ func TestCreatePostSuccess(t *testing.T) {
 	)
 
 	requestBody := map[string]string{
-		"title":   "Test Post Title",
-		"content": "This is a test post content",
+		"title":           "Test Post Title",
+		"content_markdown": "This is a test post content",
+		"content_json":    "{\"type\":\"doc\",\"content\":[]}",
 	}
 
 	jsonData, _ := json.Marshal(requestBody)
@@ -39,7 +40,7 @@ func TestCreatePostSuccess(t *testing.T) {
 	var response schemas.PostResponse
 	json.Unmarshal(w.Body.Bytes(), &response)
 	assert.Equal(t, "Test Post Title", response.Data.Title)
-	assert.Equal(t, "This is a test post content", response.Data.Content)
+	assert.Equal(t, "This is a test post content", response.Data.ContentMarkdown)
 	assert.Equal(t, "Post created successfully", response.Message)
 	assert.NotZero(t, response.Data.ID)
 }
@@ -55,8 +56,9 @@ func TestCreatePostValidationError(t *testing.T) {
 	)
 
 	requestBody := map[string]string{
-		"title":   "", // Invalid - empty title
-		"content": "This is a test post content",
+		"title":            "", // Invalid - empty title
+		"content_markdown": "This is a test post content",
+		"content_json":     "{}",
 	}
 
 	jsonData, _ := json.Marshal(requestBody)
@@ -91,7 +93,7 @@ func TestGetPostByIDSuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, post.Title, response.Data.Title)
-	assert.Equal(t, post.Content, response.Data.Content)
+	assert.Equal(t, post.ContentMarkdown, response.Data.ContentMarkdown)
 }
 
 func TestGetPostByIDDataDoesNotExist(t *testing.T) {
@@ -199,9 +201,10 @@ func TestUpdatePostSuccess(t *testing.T) {
 	)
 
 	requestBody := map[string]string{
-		"title":   "Updated Title",
-		"content": "Updated Content",
-		"status":  "published",
+		"title":           "Updated Title",
+		"content_markdown": "Updated Content",
+		"content_json":    "{\"type\":\"doc\",\"content\":[]}",
+		"status":          "published",
 	}
 
 	jsonData, _ := json.Marshal(requestBody)
@@ -217,7 +220,7 @@ func TestUpdatePostSuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, "Updated Title", response.Data.Title)
-	assert.Equal(t, "Updated Content", response.Data.Content)
+	assert.Equal(t, "Updated Content", response.Data.ContentMarkdown)
 	assert.NotZero(t, response.Data.ID)
 }
 
@@ -299,7 +302,7 @@ func TestPartiallyUpdatePostSuccess(t *testing.T) {
 	)
 
 	requestBody := map[string]string{
-		"content": "Partially Updated Content",
+		"content_markdown": "Partially Updated Content",
 	}
 
 	jsonData, _ := json.Marshal(requestBody)
@@ -315,7 +318,7 @@ func TestPartiallyUpdatePostSuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, "Original Title", response.Data.Title) // Title should remain unchanged
-	assert.Equal(t, "Partially Updated Content", response.Data.Content)
+	assert.Equal(t, "Partially Updated Content", response.Data.ContentMarkdown)
 	assert.NotZero(t, response.Data.ID)
 }
 
@@ -330,7 +333,7 @@ func TestPartiallyUpdatePostFailWhenDataDoesNotExist(t *testing.T) {
 	)
 
 	requestBody := map[string]string{
-		"content": "Partially Updated Content",
+		"content_markdown": "Partially Updated Content",
 	}
 
 	jsonData, _ := json.Marshal(requestBody)

@@ -14,9 +14,10 @@ type ListPostsQueryParams struct {
 
 // Input Schemas
 type CreatePostRequest struct {
-	Title    string   `json:"title" binding:"required,min=1,max=255" example:"My New Post"`
-	Content  string   `json:"content" binding:"required,min=1" example:"This is the content of my new post"`
-	TagNames []string `json:"tag_names,omitempty" example:"golang,web-development,tutorial"`
+	Title           string   `json:"title" binding:"required,min=1,max=255" example:"My New Post"`
+	ContentMarkdown string   `json:"content_markdown" binding:"required,min=1" example:"# My Post\n\nThis is **markdown**"`
+	ContentJSON     string   `json:"content_json" binding:"required,min=1" example:"{\"type\":\"doc\",\"content\":[]}"`
+	TagNames        []string `json:"tag_names,omitempty" example:"golang,web-development,tutorial"`
 }
 
 // Method for CreatePostRequest struct
@@ -26,15 +27,17 @@ func (r CreatePostRequest) Validate() error {
 
 func (r CreatePostRequest) ToModel() models.Post {
 	return models.Post{
-		Title:   r.Title,
-		Content: r.Content,
+		Title:           r.Title,
+		ContentMarkdown: r.ContentMarkdown,
+		ContentJSON:     r.ContentJSON,
 	}
 }
 
 type UpdatePostRequest struct {
-	Title   string           `json:"title" binding:"required,min=1,max=255" example:"Updated Post Title"`
-	Content string           `json:"content" binding:"required,min=1" example:"Updated post content"`
-	Status  models.PostStatus `json:"status" binding:"required,oneof=draft published" example:"published"`
+	Title           string            `json:"title" binding:"required,min=1,max=255" example:"Updated Post Title"`
+	ContentMarkdown string            `json:"content_markdown" binding:"required,min=1" example:"# Updated\n\nMarkdown content"`
+	ContentJSON     string            `json:"content_json" binding:"required,min=1" example:"{\"type\":\"doc\",\"content\":[]}"`
+	Status          models.PostStatus `json:"status" binding:"required,oneof=draft published" example:"published"`
 }
 
 // Method for UpdatePostRequest struct
@@ -44,16 +47,18 @@ func (r UpdatePostRequest) Validate() error {
 
 func (r UpdatePostRequest) ToModel() models.Post {
 	return models.Post{
-		Title:   r.Title,
-		Content: r.Content,
-		Status:  r.Status,
+		Title:           r.Title,
+		ContentMarkdown: r.ContentMarkdown,
+		ContentJSON:     r.ContentJSON,
+		Status:          r.Status,
 	}
 }
 
 type PatchPostRequest struct {
-	Title   *string              `json:"title,omitempty" binding:"omitempty,min=1,max=255" example:"Partially Updated Title"`
-	Content *string              `json:"content,omitempty" binding:"omitempty,min=1" example:"Partially updated content"`
-	Status  *models.PostStatus `json:"status,omitempty" binding:"omitempty,oneof=draft published" example:"published"`
+	Title           *string            `json:"title,omitempty" binding:"omitempty,min=1,max=255" example:"Partially Updated Title"`
+	ContentMarkdown *string            `json:"content_markdown,omitempty" binding:"omitempty,min=1" example:"# Updated\n\nPartial markdown"`
+	ContentJSON     *string            `json:"content_json,omitempty" binding:"omitempty,min=1" example:"{\"type\":\"doc\",\"content\":[]}"`
+	Status          *models.PostStatus `json:"status,omitempty" binding:"omitempty,oneof=draft published" example:"published"`
 }
 
 // Method for PatchPostRequest struct
@@ -62,7 +67,7 @@ func (r PatchPostRequest) Validate() error {
 }
 
 func (r PatchPostRequest) IsEmpty() bool {
-	return r.Title == nil && r.Content == nil && r.Status == nil
+	return r.Title == nil && r.ContentMarkdown == nil && r.ContentJSON == nil && r.Status == nil
 }
 
 // Method for PatchPostRequest struct
@@ -71,8 +76,11 @@ func (r PatchPostRequest) ToMap() map[string]interface{} {
 	if r.Title != nil {
 		data["title"] = *r.Title
 	}
-	if r.Content != nil {
-		data["content"] = *r.Content
+	if r.ContentMarkdown != nil {
+		data["content_markdown"] = *r.ContentMarkdown
+	}
+	if r.ContentJSON != nil {
+		data["content_json"] = *r.ContentJSON
 	}
 	if r.Status != nil {
 		data["status"] = *r.Status

@@ -34,6 +34,7 @@ func GenerateToken(user models.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
 		"email":   user.Email,
+		"name":    user.Name,
 		"exp":     time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
 	})
 

@@ -1,6 +1,7 @@
 package test
 
 import (
+	"encoding/json"
 	"go-crud/initializers"
 	"go-crud/models"
 	"go-crud/services"
@@ -16,9 +17,19 @@ func WithTitle(title string) PostOption {
 	}
 }
 
-func WithContent(content string) PostOption {
+func WithContentMarkdown(content string) PostOption {
 	return func(p *models.Post) {
-		p.Content = content
+		p.ContentMarkdown = content
+	}
+}
+
+func WithContent(content string) PostOption {
+	return WithContentMarkdown(content)
+}
+
+func WithContentJSON(content string) PostOption {
+	return func(p *models.Post) {
+		p.ContentJSON = content
 	}
 }
 
@@ -32,8 +43,72 @@ func PostFactory(opts ...PostOption) models.Post {
 	// Create a default user only if no UserID is explicitly set
 	post := &models.Post{
 		Title:   gofakeit.Sentence(6),
-		Content: gofakeit.Paragraph(1, 3, 12, " "),
+		ContentMarkdown: gofakeit.Paragraph(1, 3, 12, " "),
 	}
+
+	// Generate ContentJSON in Milkdown ProseMirror format
+	docContent := []map[string]interface{}{}
+	// Heading
+	docContent = append(docContent, map[string]interface{}{
+		"type": "heading",
+		"attrs": map[string]interface{}{"level": 1},
+		"content": []map[string]interface{}{
+			{"type": "text", "text": gofakeit.Sentence(4)},
+		},
+	})
+	// Paragraph with marked text
+	docContent = append(docContent, map[string]interface{}{
+		"type": "paragraph",
+		"content": []map[string]interface{}{
+			{"type": "text", "text": "This is "},
+			{
+				"type": "text",
+				"marks": []map[string]interface{}{{"type": "strong"}},
+				"text":  gofakeit.Word(),
+			},
+			{"type": "text", "text": " editor with "},
+			{
+				"type": "text",
+				"marks": []map[string]interface{}{{"type": "em"}},
+				"text":  gofakeit.Word(),
+			},
+			{"type": "text", "text": " syntax."},
+		},
+	})
+	// Bullet list
+	docContent = append(docContent, map[string]interface{}{
+		"type": "bullet_list",
+		"content": []map[string]interface{}{
+			{
+				"type": "list_item",
+				"content": []map[string]interface{}{
+					{
+						"type": "paragraph",
+						"content": []map[string]interface{}{
+							{"type": "text", "text": gofakeit.Word()},
+						},
+					},
+				},
+			},
+			{
+				"type": "list_item",
+				"content": []map[string]interface{}{
+					{
+						"type": "paragraph",
+						"content": []map[string]interface{}{
+							{"type": "text", "text": gofakeit.Word()},
+						},
+					},
+				},
+			},
+		},
+	})
+	doc := map[string]interface{}{
+		"type": "doc",
+		"content": docContent,
+	}
+	jsonBytes, _ := json.Marshal(doc)
+	post.ContentJSON = string(jsonBytes)
 
 	// Check if UserID is set via options
 	userIDProvided := false

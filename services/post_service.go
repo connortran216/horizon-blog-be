@@ -26,8 +26,11 @@ func (s *PostService) Create(post models.Post, tagNames []string) (*models.Post,
 	if post.Title == "" {
 		return nil, errors.New("title is required")
 	}
-	if post.Content == "" {
-		return nil, errors.New("content is required")
+	if post.ContentMarkdown == "" {
+		return nil, errors.New("content_markdown is required")
+	}
+	if post.ContentJSON == "" {
+		return nil, errors.New("content_json is required")
 	}
 
 	// Start transaction
@@ -153,13 +156,17 @@ func (s *PostService) Update(id uint, updatedPost models.Post) (*models.Post, er
 	if updatedPost.Title == "" {
 		return nil, errors.New("title is required")
 	}
-	if updatedPost.Content == "" {
-		return nil, errors.New("content is required")
+	if updatedPost.ContentMarkdown == "" {
+		return nil, errors.New("content_markdown is required")
+	}
+	if updatedPost.ContentJSON == "" {
+		return nil, errors.New("content_json is required")
 	}
 
 	// Update fields
 	post.Title = updatedPost.Title
-	post.Content = updatedPost.Content
+	post.ContentMarkdown = updatedPost.ContentMarkdown
+	post.ContentJSON = updatedPost.ContentJSON
 	if updatedPost.Status != "" {
 		post.Status = updatedPost.Status
 	}
@@ -195,11 +202,19 @@ func (s *PostService) PartialUpdate(id uint, partialData map[string]interface{})
 		}
 	}
 
-	if content, exists := partialData["content"]; exists {
-		if contentStr, ok := content.(string); ok && contentStr != "" {
-			post.Content = contentStr
+	if contentMarkdown, exists := partialData["content_markdown"]; exists {
+		if contentStr, ok := contentMarkdown.(string); ok && contentStr != "" {
+			post.ContentMarkdown = contentStr
 		} else if contentStr == "" {
-			return nil, errors.New("content cannot be empty")
+			return nil, errors.New("content_markdown cannot be empty")
+		}
+	}
+
+	if contentJSON, exists := partialData["content_json"]; exists {
+		if contentStr, ok := contentJSON.(string); ok && contentStr != "" {
+			post.ContentJSON = contentStr
+		} else if contentStr == "" {
+			return nil, errors.New("content_json cannot be empty")
 		}
 	}
 

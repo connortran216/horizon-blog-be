@@ -45,6 +45,9 @@ func SetupRouter() *gin.Engine {
 	postViews := views.NewPostViews()
 	postViews.RegisterRoutes(router)
 
+	versionViews := views.NewPostVersionViews()
+	versionViews.RegisterRoutes(router)
+
 	userViews := views.NewUserViews()
 	userViews.RegisterRoutes(router)
 

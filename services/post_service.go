@@ -112,6 +112,17 @@ func (s *PostService) GetWithPagination(query schemas.ListPostsQueryParams) ([]m
 		}
 	}
 
+	if query.Status != nil {
+		// Filter by post status based on whether versions exist with published status
+		if *query.Status == models.Published {
+			// Posts that have at least one published version
+			db = db.Where("EXISTS (SELECT 1 FROM post_versions pv WHERE pv.post_id = posts.id AND pv.status = ?)", models.VersionPublished)
+		} else if *query.Status == models.Draft {
+			// Posts that don't have any published versions (draft-only posts)
+			db = db.Where("NOT EXISTS (SELECT 1 FROM post_versions pv WHERE pv.post_id = posts.id AND pv.status = ?)", models.VersionPublished)
+		}
+	}
+
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
@@ -136,7 +147,24 @@ func (s *PostService) Delete(id uint) error {
 		return result.Error
 	}
 
+	// Start transaction
+	tx := s.db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	// Delete associated post versions first (to avoid FK constraint violations)
+	if err := tx.Unscoped().Where("post_id = ?", id).Delete(&models.PostVersion{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	// Delete the post
-	result = s.db.Delete(&post)
-	return result.Error
+	if err := tx.Delete(&post).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Commit transaction
+	return tx.Commit().Error
 }

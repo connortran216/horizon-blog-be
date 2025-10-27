@@ -17,21 +17,7 @@ func WithTitle(title string) PostOption {
 	}
 }
 
-func WithContentMarkdown(content string) PostOption {
-	return func(p *models.Post) {
-		p.ContentMarkdown = content
-	}
-}
 
-func WithContent(content string) PostOption {
-	return WithContentMarkdown(content)
-}
-
-func WithContentJSON(content string) PostOption {
-	return func(p *models.Post) {
-		p.ContentJSON = content
-	}
-}
 
 func WithUserID(userID uint) PostOption {
 	return func(p *models.Post) {
@@ -40,15 +26,14 @@ func WithUserID(userID uint) PostOption {
 }
 
 func PostFactory(opts ...PostOption) models.Post {
-	// Create a default user only if no UserID is explicitly set
 	post := &models.Post{
-		Title:   gofakeit.Sentence(6),
-		ContentMarkdown: gofakeit.Paragraph(1, 3, 12, " "),
+		Title: gofakeit.Sentence(6),
 	}
 
+	// Generate Content for versioning (keep backward compatibility in tests)
+	contentMarkdown := gofakeit.Paragraph(1, 3, 12, " ")
 	// Generate ContentJSON in Milkdown ProseMirror format
 	docContent := []map[string]interface{}{}
-	// Heading
 	docContent = append(docContent, map[string]interface{}{
 		"type": "heading",
 		"attrs": map[string]interface{}{"level": 1},
@@ -56,51 +41,10 @@ func PostFactory(opts ...PostOption) models.Post {
 			{"type": "text", "text": gofakeit.Sentence(4)},
 		},
 	})
-	// Paragraph with marked text
 	docContent = append(docContent, map[string]interface{}{
 		"type": "paragraph",
 		"content": []map[string]interface{}{
-			{"type": "text", "text": "This is "},
-			{
-				"type": "text",
-				"marks": []map[string]interface{}{{"type": "strong"}},
-				"text":  gofakeit.Word(),
-			},
-			{"type": "text", "text": " editor with "},
-			{
-				"type": "text",
-				"marks": []map[string]interface{}{{"type": "em"}},
-				"text":  gofakeit.Word(),
-			},
-			{"type": "text", "text": " syntax."},
-		},
-	})
-	// Bullet list
-	docContent = append(docContent, map[string]interface{}{
-		"type": "bullet_list",
-		"content": []map[string]interface{}{
-			{
-				"type": "list_item",
-				"content": []map[string]interface{}{
-					{
-						"type": "paragraph",
-						"content": []map[string]interface{}{
-							{"type": "text", "text": gofakeit.Word()},
-						},
-					},
-				},
-			},
-			{
-				"type": "list_item",
-				"content": []map[string]interface{}{
-					{
-						"type": "paragraph",
-						"content": []map[string]interface{}{
-							{"type": "text", "text": gofakeit.Word()},
-						},
-					},
-				},
-			},
+			{"type": "text", "text": gofakeit.Sentence(10)},
 		},
 	})
 	doc := map[string]interface{}{
@@ -108,7 +52,7 @@ func PostFactory(opts ...PostOption) models.Post {
 		"content": docContent,
 	}
 	jsonBytes, _ := json.Marshal(doc)
-	post.ContentJSON = string(jsonBytes)
+	contentJSON := string(jsonBytes)
 
 	// Check if UserID is set via options
 	userIDProvided := false
@@ -125,10 +69,22 @@ func PostFactory(opts ...PostOption) models.Post {
 		post.UserID = user.ID
 	}
 
+	// Create post metadata first
 	result := initializers.DB.Create(post)
 	if result.Error != nil {
-		panic(result.Error) // Fail fast in tests
+		panic(result.Error)
 	}
+
+	// Create initial version for the post
+	versionService := services.NewPostVersionService()
+	version, err := versionService.CreateDraftVersion(post.ID, post.UserID, post.Title, contentMarkdown, contentJSON)
+	if err != nil {
+		panic(err)
+	}
+
+	// Update the title from the version for consistency
+	post.Title = version.Title
+
 	return *post
 }
 

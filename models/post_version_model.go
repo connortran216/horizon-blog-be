@@ -17,7 +17,7 @@ type PostVersion struct {
 	ContentJSON     string            `gorm:"column:content_json;type:text" json:"content_json" example:"{\"type\":\"doc\",\"content\":[]}"`
 	Status          PostVersionStatus `gorm:"not null" json:"status" example:"draft"`
 	AuthorID        uint              `gorm:"not null" json:"author_id" example:"1"`
-	Post            *Post             `gorm:"foreignKey:PostID" json:"post,omitempty"`
+	Post            *Post             `gorm:"foreignKey:PostID;references:ID" json:"post,omitempty"`
 	Author          *User             `gorm:"foreignKey:AuthorID" json:"author,omitempty"`
 	CreatedAt       time.Time         `json:"created_at" example:"2023-01-01T00:00:00Z"`
 	UpdatedAt       time.Time         `json:"updated_at" example:"2023-01-01T00:00:00Z"`

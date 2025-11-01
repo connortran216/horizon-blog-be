@@ -40,9 +40,9 @@ func TestCreatePostSuccess(t *testing.T) {
 	var response schemas.PostResponse
 	json.Unmarshal(w.Body.Bytes(), &response)
 	assert.Equal(t, "Test Post Title", response.Data.Title)
+	assert.Equal(t, "This is a test post content", response.Data.ContentMarkdown)
 	assert.Equal(t, "Post created successfully", response.Message)
 	assert.NotZero(t, response.Data.ID)
-	// Note: API only creates post metadata, versions are created separately
 }
 
 func TestCreatePostValidationError(t *testing.T) {
@@ -93,7 +93,7 @@ func TestGetPostByIDSuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, post.Title, response.Data.Title)
-	// PublishedVersion is no longer included in the response (removed due to circular dependency)
+	assert.Equal(t, post.ContentMarkdown, response.Data.ContentMarkdown)
 }
 
 func TestGetPostByIDDataDoesNotExist(t *testing.T) {
@@ -197,6 +197,7 @@ func TestUpdatePostSuccess(t *testing.T) {
 	post := PostFactory(
 		WithUserID(user.ID),
 		WithTitle("Original Title"),
+		WithContent("Original Content"),
 	)
 
 	requestBody := map[string]string{
@@ -219,7 +220,7 @@ func TestUpdatePostSuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, "Updated Title", response.Data.Title)
-	// Content is now in versions, PublishedVersion field was removed due to circular dependency
+	assert.Equal(t, "Updated Content", response.Data.ContentMarkdown)
 	assert.NotZero(t, response.Data.ID)
 }
 
@@ -253,37 +254,37 @@ func TestUpdatePostFailWhenDataDoesNotExist(t *testing.T) {
 	assert.Contains(t, response.Error, "Post not found") // Match actual error message case
 }
 
-// func TestUpdatePostFailWhenDataIsInvalid(t *testing.T) {
-// 	suite := NewTestSuite(t)
-// 	defer suite.TearDown()
+func TestUpdatePostFailWhenDataIsInvalid(t *testing.T) {
+	suite := NewTestSuite(t)
+	defer suite.TearDown()
 
-// 	// Create authenticated user and post
-// 	user := UserFactory("testPassword123",
-// 		WithEmail("test-update-invalid@example.com"),
-// 		WithName("Test User"),
-// 	)
-// 	post := PostFactory(WithUserID(user.ID))
+	// Create authenticated user and post
+	user := UserFactory("testPassword123",
+		WithEmail("test-update-invalid@example.com"),
+		WithName("Test User"),
+	)
+	post := PostFactory(WithUserID(user.ID))
 
-// 	requestBody := map[string]string{
-// 		"author":  "", // Invalid non-existent field
-// 		"content": "Updated Content",
-// 		"status":  "published",
-// 	}
+	requestBody := map[string]string{
+		"author":  "", // Invalid non-existent field
+		"content": "Updated Content",
+		"status":  "published",
+	}
 
-// 	jsonData, _ := json.Marshal(requestBody)
-// 	req, _ := http.NewRequest("PUT", "/posts/"+strconv.FormatUint(uint64(post.ID), 10), bytes.NewBuffer(jsonData))
-// 	req.Header.Set("Content-Type", "application/json")
-// 	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-update-invalid@example.com"))
+	jsonData, _ := json.Marshal(requestBody)
+	req, _ := http.NewRequest("PUT", "/posts/"+strconv.FormatUint(uint64(post.ID), 10), bytes.NewBuffer(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+getAuthToken(t, suite, "test-update-invalid@example.com"))
 
-// 	w := httptest.NewRecorder()
-// 	suite.router.ServeHTTP(w, req)
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
 
-// 	var response schemas.ErrorResponse
-// 	json.Unmarshal(w.Body.Bytes(), &response)
+	var response schemas.ErrorResponse
+	json.Unmarshal(w.Body.Bytes(), &response)
 
-// 	assert.Equal(t, http.StatusBadRequest, w.Code)
-// 	assert.Contains(t, response.Error, "Invalid request data: Key: 'UpdatePostRequest.Title' Error:Field validation for 'Title' failed on the 'required' tag")
-// }
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, response.Error, "Invalid request data: Key: 'UpdatePostRequest.Title' Error:Field validation for 'Title' failed on the 'required' tag")
+}
 
 func TestPartiallyUpdatePostSuccess(t *testing.T) {
 	suite := NewTestSuite(t)
@@ -297,6 +298,7 @@ func TestPartiallyUpdatePostSuccess(t *testing.T) {
 	post := PostFactory(
 		WithUserID(user.ID),
 		WithTitle("Original Title"),
+		WithContent("Original Content"),
 	)
 
 	requestBody := map[string]string{
@@ -316,7 +318,7 @@ func TestPartiallyUpdatePostSuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, "Original Title", response.Data.Title) // Title should remain unchanged
-	// Content is now in versions, PublishedVersion field was removed due to circular dependency
+	assert.Equal(t, "Partially Updated Content", response.Data.ContentMarkdown)
 	assert.NotZero(t, response.Data.ID)
 }
 
@@ -391,6 +393,7 @@ func TestDeletePostSuccess(t *testing.T) {
 	post := PostFactory(
 		WithUserID(user.ID),
 		WithTitle("Post to delete"),
+		WithContent("This post will be deleted"),
 	)
 
 	req, _ := http.NewRequest("DELETE", "/posts/"+strconv.FormatUint(uint64(post.ID), 10), nil)

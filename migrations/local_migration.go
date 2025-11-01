@@ -18,7 +18,6 @@ func main() {
 	// Auto-migrate all models
 	err := initializers.DB.AutoMigrate(
 		&models.User{},
-		&models.PostVersion{},
 		&models.Post{},
 		&models.Tag{},
 		&models.PostTag{},
@@ -29,3 +28,4 @@ func main() {
 
 	fmt.Println("✅ Database migration completed successfully!")
 }
+

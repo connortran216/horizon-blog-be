@@ -13,10 +13,12 @@ CREATE TABLE IF NOT EXISTS post_versions (
 
 -- Add new fields to posts table
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS slug VARCHAR(255);
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS published_version_id INTEGER REFERENCES post_versions(id);
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_post_versions_post_id ON post_versions(post_id);
 CREATE INDEX IF NOT EXISTS idx_post_versions_status ON post_versions(status);
+CREATE INDEX IF NOT EXISTS idx_posts_published_version_id ON posts(published_version_id);
 
 -- Migrate existing post data to versions
 -- For each existing post, create an initial version with the current content and status
@@ -32,6 +34,12 @@ SELECT
     END,
     p.user_id
 FROM posts p;
+
+-- Update posts to set published_version_id for posts that had 'published' status
+UPDATE posts
+SET published_version_id = pv.id
+FROM post_versions pv
+WHERE posts.id = pv.post_id AND pv.status = 'published';
 
 -- Remove old status and content fields from posts table
 ALTER TABLE posts DROP COLUMN IF EXISTS status;

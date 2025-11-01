@@ -6,11 +6,10 @@ import (
 
 // Query Parameters
 type ListPostsQueryParams struct {
-	Page     int                 `json:"page" form:"page" validate:"omitempty,min=1" default:"1"`
-	Limit    int                 `json:"limit" form:"limit" validate:"omitempty,min=1,max=100" default:"10"`
-	UserID   *uint               `json:"user_id,omitempty" form:"user_id"`
-	TagNames []string            `json:"tag_names,omitempty" form:"tags"` // Filter by tag names
-	Status   *models.PostStatus  `json:"status,omitempty" form:"status"`
+	Page     int      `json:"page" form:"page" validate:"omitempty,min=1" default:"1"`
+	Limit    int      `json:"limit" form:"limit" validate:"omitempty,min=1,max=100" default:"10"`
+	UserID   *uint    `json:"user_id,omitempty" form:"user_id"`
+	TagNames []string `json:"tag_names,omitempty" form:"tags"` // Filter by tag names
 }
 
 // Input Schemas
@@ -32,17 +31,6 @@ type CreateVersionRequest struct {
 
 // Method for CreateVersionRequest struct
 func (r CreateVersionRequest) Validate() error {
-	return validate.Struct(r)
-}
-
-type PatchPostRequest struct {
-	Title           *string `json:"title,omitempty" binding:"omitempty,min=1,max=255" example:"Updated Post Title"`
-	ContentMarkdown *string `json:"content_markdown,omitempty" binding:"omitempty,min=1" example:"# Updated content\n\n**markdown**"`
-	ContentJSON     *string `json:"content_json,omitempty" example:"{\"type\":\"doc\",\"content\":[]}"`
-}
-
-// Method for PatchPostRequest struct
-func (r PatchPostRequest) Validate() error {
 	return validate.Struct(r)
 }
 

@@ -3,6 +3,7 @@ package test
 
 import (
 	"go-crud/initializers"
+	"go-crud/models"
 	"go-crud/router"
 	"testing"
 
@@ -28,13 +29,11 @@ func (suite *BaseTestSuite) SetUp() {
 }
 
 func (suite *BaseTestSuite) CleanUp() {
-	// Force delete all records in correct order to avoid FK constraints
-	// Use raw SQL to ensure complete cleanup regardless of relationships
-	initializers.DB.Exec("DELETE FROM post_versions WHERE 1=1")
-	initializers.DB.Exec("DELETE FROM posts WHERE 1=1")
-	initializers.DB.Exec("DELETE FROM users WHERE 1=1")
+	initializers.DB.Where("1 = 1").Delete(&models.Post{})
+	initializers.DB.Where("1 = 1").Delete(&models.User{})
 }
 
 func (suite *BaseTestSuite) TearDown() {
 	suite.CleanUp()
 }
+

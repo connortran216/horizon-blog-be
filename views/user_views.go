@@ -261,19 +261,18 @@ func (v *UserViews) ListUserPosts(c *gin.Context) {
 	// Set user ID to authenticated user
 	query.UserID = &userID
 
-	// Handle status filtering (Note: status filtering not yet implemented in current PostService.GetWithPagination)
-	// TODO: Implement status-based post filtering if needed
-	// if statusParam := c.Query("status"); statusParam != "" {
-	//     status := models.PostStatus(statusParam)
-	//     // Validate status value
-	//     if status != models.Draft && status != models.Published {
-	//         c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
-	//             Error: "Invalid status: must be 'draft' or 'published'",
-	//         })
-	//         return
-	//     }
-	//     query.Status = &status
-	// }
+	// Handle status filtering
+	if statusParam := c.Query("status"); statusParam != "" {
+		status := models.PostStatus(statusParam)
+		// Validate status value
+		if status != models.Draft && status != models.Published {
+			c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
+				Error: "Invalid status: must be 'draft' or 'published'",
+			})
+			return
+		}
+		query.Status = &status
+	}
 
 	// Use post service to get posts
 	postService := services.NewPostService()

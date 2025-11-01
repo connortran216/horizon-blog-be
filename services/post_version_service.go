@@ -47,10 +47,9 @@ func (s *PostVersionService) CreateDraftVersion(postID, authorID uint, title, co
 
 	// No existing draft, create new one
 	var versionToCopy *models.PostVersion
-	publishedResult := s.db.Where("post_id = ? AND status = ?", postID, models.VersionPublished).First(&versionToCopy)
-	if publishedResult.Error != nil {
-		// No published version found, set to nil
-		versionToCopy = nil
+	if post.PublishedVersionID != nil {
+		// Copy from published version
+		s.db.First(&versionToCopy, *post.PublishedVersionID)
 	}
 
 	var newVersion models.PostVersion
@@ -69,9 +68,9 @@ func (s *PostVersionService) CreateDraftVersion(postID, authorID uint, title, co
 		newVersion.Title = title
 	}
 
-	createResult := s.db.Create(&newVersion)
-	if createResult.Error != nil {
-		return nil, createResult.Error
+	result = s.db.Create(&newVersion)
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
 	return &newVersion, nil
@@ -107,10 +106,10 @@ func (s *PostVersionService) AutoSaveDraft(versionID, authorID uint, title, cont
 	return &version, result.Error
 }
 
-// PublishVersion publishes a version and marks all other versions for the same post as drafts
+// PublishVersion publishes a version and updates the post's published_version_id
 func (s *PostVersionService) PublishVersion(versionID, authorID uint) (*models.PostVersion, error) {
 	var version models.PostVersion
-	result := s.db.First(&version, versionID)
+	result := s.db.Preload("Post").First(&version, versionID)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, errors.New("version not found")
@@ -136,9 +135,17 @@ func (s *PostVersionService) PublishVersion(versionID, authorID uint) (*models.P
 		return nil, err
 	}
 
-	// Mark all other versions for this post as drafts (only one can be published)
+	// Update post's published_version_id
+	version.Post.PublishedVersionID = &version.ID
+	if err := tx.Save(&version.Post).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// Mark all other versions for this post as drafts (not published)
 	if err := tx.Model(&models.PostVersion{}).
-		Where("post_id = ? AND id != ?", version.PostID, versionID).
+		Where("post_id = ? AND id != ? AND status = ?",
+			version.PostID, versionID, models.VersionPublished).
 		Update("status", models.VersionDraft).Error; err != nil {
 		tx.Rollback()
 		return nil, err

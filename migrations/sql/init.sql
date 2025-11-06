@@ -16,14 +16,17 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create posts table with draft/publication fields
+-- Create enum type for post status
+CREATE TYPE post_status AS ENUM ('draft', 'published');
+
+-- Create posts table
 CREATE TABLE IF NOT EXISTS posts (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
-    is_draft BOOLEAN DEFAULT true NOT NULL,
-    is_published BOOLEAN DEFAULT false NOT NULL,
+    content_markdown TEXT,
+    content_json TEXT,
+    status post_status DEFAULT 'draft' NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -64,8 +67,7 @@ ON CONFLICT (name) DO NOTHING;
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_posts_is_draft ON posts(is_draft);
-CREATE INDEX IF NOT EXISTS idx_posts_is_published ON posts(is_published);
+CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status);
 CREATE INDEX IF NOT EXISTS idx_tags_name ON tags(name);
 CREATE INDEX IF NOT EXISTS idx_tags_usage_count ON tags(usage_count DESC);
 CREATE INDEX IF NOT EXISTS idx_post_tags_post_id ON post_tags(post_id);

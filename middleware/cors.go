@@ -6,9 +6,28 @@ import (
 
 // CORSMiddleware handles CORS preflight requests and sets appropriate headers
 func CORSMiddleware() gin.HandlerFunc {
+	allowedOrigins := []string{
+		"http://localhost:5173",           // Development frontend
+		"https://blog.connortran.io.vn",   // Production frontend
+		"https://blog-api.connortran.io.vn", // API domain (in case of direct calls)
+	}
+
 	return func(c *gin.Context) {
-		// Set CORS headers with specific frontend origin
-		c.Header("Access-Control-Allow-Origin", "http://localhost:5173") // Specific frontend URL
+		origin := c.GetHeader("Origin")
+
+		// Check if the origin is in our allowed list
+		allowOrigin := false
+		for _, allowedOrigin := range allowedOrigins {
+			if origin == allowedOrigin {
+				allowOrigin = true
+				break
+			}
+		}
+
+		if allowOrigin {
+			c.Header("Access-Control-Allow-Origin", origin)
+		}
+
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		c.Header("Access-Control-Allow-Credentials", "true")

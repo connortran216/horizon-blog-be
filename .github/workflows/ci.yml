@@ -15,7 +15,7 @@ jobs:
         image: postgres:15-alpine
         env:
           POSTGRES_USER: go_crud
-          POSTGRES_PASSWORD: password
+          POSTGRES_PASSWORD: go_crud
           POSTGRES_DB: go_crud
         options: >-
           --health-cmd pg_isready
@@ -45,18 +45,13 @@ jobs:
     - name: Download dependencies
       run: go mod download
 
-    - name: Generate swagger docs
-      run: |
-        go install github.com/swaggo/swag/cmd/swag@latest
-        swag init -g main.go
-
     - name: Install gotestsum
       run: go install gotest.tools/gotestsum@latest
 
     - name: Initialize database
       run: go run migrations/local_migration.go
       env:
-        DB_DSN: postgres://go_crud:password@localhost:5432/go_crud?sslmode=disable
+        DB_DSN: postgres://go_crud:go_crud@localhost:5432/go_crud?sslmode=disable
 
     - name: Run tests
       run: gotestsum --format=short-verbose ./test -- -count=1 -v

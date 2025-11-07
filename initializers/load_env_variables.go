@@ -2,13 +2,13 @@ package initializers
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"path/filepath"
 	"runtime"
-	"github.com/joho/godotenv"
 )
 
 func LoadEnvVariables() {
-  	// Get the directory of this source file
+	// Get the directory of this source file
 	_, filename, _, _ := runtime.Caller(0)
 	projectRoot := filepath.Dir(filepath.Dir(filename)) // Go up from initializers/ to project root
 	envPath := filepath.Join(projectRoot, ".env")

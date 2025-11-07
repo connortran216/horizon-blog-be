@@ -5,10 +5,9 @@ import "time"
 type PostStatus string
 
 const (
-    Draft   PostStatus = "draft"
-    Published   PostStatus = "published"
+	Draft     PostStatus = "draft"
+	Published PostStatus = "published"
 )
-
 
 type Post struct {
 	ID              uint       `gorm:"primaryKey" json:"id" example:"1"`

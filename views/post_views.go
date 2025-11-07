@@ -35,8 +35,6 @@ func (v *PostViews) CreatePost(c *gin.Context) {
 		return
 	}
 
-
-
 	// Get authenticated user ID
 	userID, exists := GetUserIDFromContext(c)
 	if !exists {
@@ -117,7 +115,7 @@ func (v *PostViews) ListPosts(c *gin.Context) {
 		return
 	}
 
-response := schemas.ListPostsResponse{
+	response := schemas.ListPostsResponse{
 		Data:  results,
 		Limit: query.Limit,
 		Page:  query.Page,
@@ -200,8 +198,6 @@ func (v *PostViews) UpdatePost(c *gin.Context) {
 		})
 		return
 	}
-
-
 
 	result, err := v.service.Update(uint(id), input.ToModel())
 	if err != nil {

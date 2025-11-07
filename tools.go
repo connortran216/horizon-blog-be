@@ -4,6 +4,6 @@
 package tools
 
 import (
-    _ "gotest.tools/gotestsum"
-    _ "github.com/air-verse/air"
+	_ "github.com/air-verse/air"
+	_ "gotest.tools/gotestsum"
 )

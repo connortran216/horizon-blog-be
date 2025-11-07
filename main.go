@@ -3,8 +3,8 @@
 package main
 
 import (
-	"go-crud/router"
 	_ "go-crud/docs" // This will be generated
+	"go-crud/router"
 )
 
 // @title Go CRUD API

@@ -22,9 +22,9 @@ func TestCreatePostSuccess(t *testing.T) {
 	)
 
 	requestBody := map[string]string{
-		"title":           "Test Post Title",
+		"title":            "Test Post Title",
 		"content_markdown": "This is a test post content",
-		"content_json":    "{\"type\":\"doc\",\"content\":[]}",
+		"content_json":     "{\"type\":\"doc\",\"content\":[]}",
 	}
 
 	jsonData, _ := json.Marshal(requestBody)
@@ -201,10 +201,10 @@ func TestUpdatePostSuccess(t *testing.T) {
 	)
 
 	requestBody := map[string]string{
-		"title":           "Updated Title",
+		"title":            "Updated Title",
 		"content_markdown": "Updated Content",
-		"content_json":    "{\"type\":\"doc\",\"content\":[]}",
-		"status":          "published",
+		"content_json":     "{\"type\":\"doc\",\"content\":[]}",
+		"status":           "published",
 	}
 
 	jsonData, _ := json.Marshal(requestBody)

@@ -28,4 +28,3 @@ func main() {
 
 	fmt.Println("✅ Database migration completed successfully!")
 }
-

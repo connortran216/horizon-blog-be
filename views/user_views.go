@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 type UserViews struct {
 	service *services.UserService
 }
@@ -21,7 +20,6 @@ func NewUserViews() *UserViews {
 		service: services.NewUserService(),
 	}
 }
-
 
 // @Summary Create user
 // @Tags users
@@ -37,11 +35,9 @@ func (v *UserViews) CreateUser(c *gin.Context) {
 		return
 	}
 
-
-
 	result, err := v.service.Create(models.User{
-		Name:         input.Name,
-		Email:        input.Email,
+		Name:           input.Name,
+		Email:          input.Email,
 		HashedPassword: input.Password,
 	})
 	if err != nil {
@@ -148,8 +144,6 @@ func (v *UserViews) PartialUpdateUser(c *gin.Context) {
 		})
 		return
 	}
-
-
 
 	result, err := v.service.PartialUpdate(uint(id), input)
 	if err != nil {

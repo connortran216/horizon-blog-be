@@ -1,6 +1,5 @@
 package test
 
-
 import (
 	"go-crud/initializers"
 	"go-crud/models"
@@ -10,10 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 type BaseTestSuite struct {
 	router *gin.Engine
-	t *testing.T
+	t      *testing.T
 }
 
 func NewTestSuite(t *testing.T) *BaseTestSuite {
@@ -36,4 +34,3 @@ func (suite *BaseTestSuite) CleanUp() {
 func (suite *BaseTestSuite) TearDown() {
 	suite.CleanUp()
 }
-

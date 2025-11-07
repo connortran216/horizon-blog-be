@@ -49,7 +49,7 @@ type ListTagsResponse struct {
 }
 
 type TagListQueryParams struct {
-	Page  int `json:"page" form:"page" validate:"omitempty,min=1" default:"1"`
-	Limit int `json:"limit" form:"limit" validate:"omitempty,min=1,max=100" default:"20"`
+	Page  int    `json:"page" form:"page" validate:"omitempty,min=1" default:"1"`
+	Limit int    `json:"limit" form:"limit" validate:"omitempty,min=1,max=100" default:"20"`
 	Sort  string `json:"sort" form:"sort" validate:"omitempty,oneof=name usage_count created_at" default:"name"`
 }

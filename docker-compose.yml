@@ -23,6 +23,7 @@ services:
   # Go CRUD API (Production)
   api:
     build: .
+    image: connortran216/go-crud:latest
     container_name: horizon-blog-be
     restart: unless-stopped
     ports:
@@ -42,27 +43,19 @@ services:
     networks:
       - horizon-blog
 
-  # # Go CRUD API (Development - Remote Container Coding)
-  # api-dev:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.dev
-  #   container_name: go-crud-api-dev
-  #   restart: unless-stopped
-  #   stdin_open: true  # Keep stdin open for interactive shell
-  #   tty: true         # Allocate pseudo-TTY for terminal access
-  #   ports:
-  #     - "8090:8080"
-  #   env_file: .env
-  #   environment:
-  #     DB_DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
-  #   volumes:
-  #     - ./:/app  # Bidirectional sync between container and local
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   networks:
-  #     - horizon-blog
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/.docker/config.json:/config.json
+    command: >
+      --http-api-update
+      --http-api-token Connortran@216
+      horizon-blog-be
+    ports:
+      - "8099:8080"
 
 volumes:
   postgres_data:

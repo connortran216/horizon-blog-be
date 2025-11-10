@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     services:
       postgres:
         image: postgres:15-alpine
@@ -71,7 +71,7 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: test
 
     steps:
@@ -148,9 +148,9 @@ jobs:
         docker tag go-crud:latest ${{ secrets.DOCKERHUB_USERNAME }}/go-crud:latest
         docker push ${{ secrets.DOCKERHUB_USERNAME }}/go-crud:latest
 
-    - name: Deploy to private server via Tailscale
+    - name: Deploy to private server via Watch Tower
       run: |
-        curl -X POST "http://${{ secrets.TAILSCALE_IP }}:8099/v1/update" \
+        curl -X POST "http://${{ secrets.WATCHTOWER_IP }}:8099/v1/update" \
           -H "Authorization: Bearer ${{ secrets.WATCHTOWER_TOKEN }}" \
           --fail --silent --show-error
 

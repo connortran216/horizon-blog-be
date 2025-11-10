@@ -43,19 +43,16 @@ services:
     networks:
       - horizon-blog
 
-  watchtower:
-    image: containrrr/watchtower
-    container_name: watchtower
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /root/.docker/config.json:/config.json
-    command: >
-      --http-api-update
-      --http-api-token Connortran@216
-      horizon-blog-be
-    ports:
-      - "8099:8080"
+  # watchtower:
+  #   image: containrrr/watchtower
+  #   container_name: watchtower
+  #   restart: unless-stopped
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - /root/.docker/config.json:/config.json   # ← gives Watchtower your login
+  #   command: --http-api-update --http-api-token Connortran@216 horizon-blog-be
+  #   ports:
+  #     - "8099:8080"
 
 volumes:
   postgres_data:

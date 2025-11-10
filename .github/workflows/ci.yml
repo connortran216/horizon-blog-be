@@ -33,14 +33,7 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: '1.24.5'
-
-    - name: Cache Go modules
-      uses: actions/cache@v4
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
+        cache: true
 
     - name: Download dependencies
       run: go mod download
@@ -110,7 +103,7 @@ jobs:
 
   docker:
     name: Docker Build & Deploy
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     # Only deploy on push to main (not develop, not PRs)
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'

@@ -38,6 +38,10 @@ func SetupRouter() *gin.Engine {
 			})
 		})
 
+		public.HEAD("/health", func(c *gin.Context) {
+			c.Status(200)
+		})
+
 		// Swagger endpoint (public but no rate limiting for docs)
 		public.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}

@@ -9,8 +9,8 @@ type ListPostsQueryParams struct {
 	Page     int                `form:"page" binding:"omitempty,min=0"`
 	Limit    int                `form:"limit" binding:"omitempty,min=0,max=100"`
 	UserID   *uint              `form:"user_id"`
-	Status   *models.PostStatus `form:"status"`  // Filter by status
-	TagNames []string           `form:"tags"`    // Filter by tag names
+	Status   *models.PostStatus `form:"status"`
+	TagNames []string           `form:"tags"`
 }
 
 // Method for ListPostsQueryParams struct - sets default values

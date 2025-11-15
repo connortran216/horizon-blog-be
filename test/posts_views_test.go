@@ -3,6 +3,7 @@ package test
 import (
 	"bytes"
 	"encoding/json"
+	"go-crud/models"
 	"go-crud/schemas"
 	"net/http"
 	"net/http/httptest"
@@ -163,7 +164,7 @@ func TestListPostsSuccessWithCustomPagination(t *testing.T) {
 	assert.GreaterOrEqual(t, response.Total, 10)
 }
 
-func TestListPostsShouldReturnDefaultPaginationWhenInvalidQueryParams(t *testing.T) {
+func TestListPostsShouldReturnValidationErrorWhenInvalidQueryParams(t *testing.T) {
 	suite := NewTestSuite(t)
 	defer suite.TearDown()
 
@@ -176,11 +177,35 @@ func TestListPostsShouldReturnDefaultPaginationWhenInvalidQueryParams(t *testing
 	var response schemas.ListPostsResponse
 	json.Unmarshal(w.Body.Bytes(), &response)
 
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestListPostsShouldReturnDraftPostsWhenStatusIsDraft(t *testing.T) {
+	suite := NewTestSuite(t)
+	defer suite.TearDown()
+
+	// Create mock data Posts with different statuses
+	for i := 0; i < 5; i++ {
+		PostFactory(WithStatus(models.Draft))
+	}
+	for i := 0; i < 5; i++ {
+		PostFactory(WithStatus(models.Published))
+	}
+
+	req, _ := http.NewRequest("GET", "/posts?status=draft", nil)
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	suite.router.ServeHTTP(w, req)
+
+	var response schemas.ListPostsResponse
+	json.Unmarshal(w.Body.Bytes(), &response)
+
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.GreaterOrEqual(t, len(response.Data), 0)
-	assert.Equal(t, 10, response.Limit) // Default limit
-	assert.Equal(t, 1, response.Page)   // Default page
-	assert.GreaterOrEqual(t, response.Total, 0)
+	assert.Equal(t, 5, len(response.Data)) // Should only return draft posts
+	for _, post := range response.Data {
+		assert.Equal(t, models.Draft, post.Status)
+	}
 }
 
 func TestUpdatePostSuccess(t *testing.T) {

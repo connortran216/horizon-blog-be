@@ -1,4 +1,4 @@
-.PHONY: docs dev build
+.PHONY: docs dev build test gotestsum
 
 docs:
 	swag init

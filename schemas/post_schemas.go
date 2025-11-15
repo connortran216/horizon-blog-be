@@ -6,11 +6,25 @@ import (
 
 // Query Parameters
 type ListPostsQueryParams struct {
-	Page     int                `json:"page" form:"page" validate:"omitempty,min=1" default:"1"`
-	Limit    int                `json:"limit" form:"limit" validate:"omitempty,min=1,max=100" default:"10"`
-	UserID   *uint              `json:"user_id,omitempty" form:"user_id"`
-	Status   *models.PostStatus `json:"status,omitempty" form:"status"`  // Filter by status
-	TagNames []string           `json:"tag_names,omitempty" form:"tags"` // Filter by tag names
+	Page     int                `form:"page" binding:"omitempty,min=0"`
+	Limit    int                `form:"limit" binding:"omitempty,min=0,max=100"`
+	UserID   *uint              `form:"user_id"`
+	Status   *models.PostStatus `form:"status"`  // Filter by status
+	TagNames []string           `form:"tags"`    // Filter by tag names
+}
+
+// Method for ListPostsQueryParams struct - sets default values
+func (q *ListPostsQueryParams) SetDefaults() {
+	if q.Page <= 0 {
+		q.Page = 1
+	}
+	if q.Limit <= 0 {
+		q.Limit = 10
+	}
+	if q.Status == nil {
+		defaultStatus := models.Published
+		q.Status = &defaultStatus
+	}
 }
 
 // Input Schemas

@@ -39,11 +39,18 @@ func WithUserID(userID uint) PostOption {
 	}
 }
 
+func WithStatus(status models.PostStatus) PostOption {
+	return func(p *models.Post) {
+		p.Status = status
+	}
+}
+
 func PostFactory(opts ...PostOption) models.Post {
 	// Create a default user only if no UserID is explicitly set
 	post := &models.Post{
 		Title:           gofakeit.Sentence(6),
 		ContentMarkdown: gofakeit.Paragraph(1, 3, 12, " "),
+		Status:          models.Published,
 	}
 
 	// Generate ContentJSON in Milkdown ProseMirror format

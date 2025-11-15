@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	// "go-crud/models"
 	"go-crud/schemas"
 	"go-crud/services"
 	"net/http"
@@ -70,24 +71,17 @@ func (v *PostViews) CreatePost(c *gin.Context) {
 // @Router /posts [get]
 func (v *PostViews) ListPosts(c *gin.Context) {
 	var query schemas.ListPostsQueryParams
-	query.Page, _ = strconv.Atoi(c.Query("page"))
-	query.Limit, _ = strconv.Atoi(c.Query("limit"))
 
-	// Set defaults if not provided
-	if query.Page == 0 {
-		query.Page = 1
-	}
-	if query.Limit == 0 {
-		query.Limit = 10
+	// Bind form parameters using schema with automatic defaults
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
+			Error: fmt.Sprintf("Invalid query params: %v", err),
+		})
+		return
 	}
 
-	// Check if authenticated user wants to filter by their own posts
-	userID, exists := GetUserIDFromContext(c)
-	if exists {
-		if c.Query("mine") == "true" {
-			query.UserID = &userID
-		}
-	}
+	// Schema automatically sets defaults for missing values
+	query.SetDefaults()
 
 	// Handle tag filtering
 	if tagsParam := c.Query("tags"); tagsParam != "" {

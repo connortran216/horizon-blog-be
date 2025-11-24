@@ -134,8 +134,8 @@ func (s *PostService) GetWithPagination(query schemas.ListPostsQueryParams) ([]m
 	// Calculate offset
 	offset := (query.Page - 1) * query.Limit
 
-	// Get paginated results with preloading
-	result := db.Preload("User").Preload("Tags").Limit(query.Limit).Offset(offset).Find(&posts)
+	// Get paginated results with preloading, sorted by created date DESC
+	result := db.Preload("User").Preload("Tags").Order("created_at DESC").Limit(query.Limit).Offset(offset).Find(&posts)
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}
